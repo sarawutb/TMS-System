@@ -1,0 +1,505 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+    --primary-color: #1890ff;
+    --primary-hover: #40a9ff;
+    --primary-bg: #e6f7ff;
+    --secondary-color: #13c2c2;
+    --bg-body: #f8f9fa;
+    --surface-card: #ffffff;
+    --surface-hover: #f3f6fa;
+    --text-primary: #212529;
+    --text-secondary: #6c757d;
+    --border-color: #f0f0f0;
+    
+    --success-color: #52c41a;
+    --success-bg: #f6ffed;
+    --success-border: #b7eb8f;
+    
+    --warning-color: #faad14;
+    --warning-bg: #fffbe6;
+    --warning-border: #ffe58f;
+    
+    --danger-color: #ff4d4f;
+    --danger-bg: #fff2f0;
+    --danger-border: #ffccc7;
+    
+    --transition-speed: 0.2s;
+    --sidebar-width: 260px;
+}
+
+html, body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background-color: var(--bg-body);
+    color: var(--text-primary);
+    margin: 0;
+    padding: 0;
+}
+
+/* Container sizing for the progress screen */
+.loading-progress {
+    position: relative;
+    display: block;
+    width: 8rem;
+    height: 8rem;
+    margin: 20vh auto 1rem auto;
+}
+
+/* The loading circle path track */
+.loading-progress circle {
+    stroke: #f3f3f3;
+    stroke-width: 0.6rem;
+    fill: none;
+    stroke-linecap: round;
+    transform-origin: 50% 50%;
+    transform: rotate(-90deg);
+}
+
+/* The animated filling circle representing download percentage */
+.loading-progress circle:last-child {
+    stroke: #1b6ec2; /* Color of progress bar */
+    /* --blazor-load-percentage is set by Blazor's framework script */
+    stroke-dasharray: calc(3.14159265 * 2 * 40%) 100%;
+    stroke-dashoffset: calc(3.14159265 * 2 * 40% * (100 - var(--blazor-load-percentage, 0)) / 100);
+    transition: stroke-dashoffset 0.05s ease-in-out;
+}
+
+/* Target the percentage text underneath the spinner */
+.loading-progress-text::after {
+    /* --blazor-load-percentage-text string automatically provided by Blazor */
+    content: var(--blazor-load-percentage-text, "Loading...");
+    display: block;
+    text-align: center;
+    font-weight: bold;
+}
+
+#blazor-error-ui
+{
+    background: lightyellow;
+    bottom: 0;
+    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
+    display: none;
+    left: 0;
+    padding: 0.6rem 1.25rem 0.7rem 1.25rem;
+    position: fixed;
+    width: 100%;
+    z-index: 1000;
+}
+
+#blazor-error-ui .dismiss
+{
+    cursor: pointer;
+    position: absolute;
+    right: 0.75rem;
+    top: 0.5rem;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #aaa;
+}
+
+/* Base Link */
+a {
+    color: var(--primary-color);
+    text-decoration: none;
+    transition: color var(--transition-speed);
+}
+a:hover {
+    color: var(--primary-hover);
+}
+
+/* Layout */
+.tms-layout {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* Sidebar styling */
+.tms-sidebar {
+    width: var(--sidebar-width);
+    background-color: #001529;
+    color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    z-index: 100;
+    transition: width var(--transition-speed);
+    box-shadow: 2px 0 8px 0 rgba(29,35,41,.05);
+}
+
+.tms-sidebar-brand {
+    height: 64px;
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    background-color: #002140;
+    color: #ffffff;
+    letter-spacing: 0.5px;
+}
+
+.tms-sidebar-brand i {
+    font-size: 1.3rem;
+    color: var(--primary-color);
+}
+
+.tms-sidebar-menu {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 0;
+}
+
+.tms-menu-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 24px;
+    color: rgba(255, 255, 255, 0.65);
+    font-weight: 500;
+    font-size: 14px;
+    border-left: 4px solid transparent;
+    transition: all var(--transition-speed);
+}
+
+.tms-menu-item:hover {
+    color: #ffffff;
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.tms-menu-item.active {
+    color: #ffffff;
+    background-color: var(--primary-color);
+    border-left-color: var(--secondary-color);
+}
+
+.tms-menu-item i {
+    font-size: 1.1rem;
+    width: 24px;
+    margin-right: 12px;
+}
+
+/* Main Area */
+.tms-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+/* Top App Bar */
+.tms-topbar {
+    height: 64px;
+    background-color: #ffffff;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    position: sticky;
+    top: 0;
+    z-index: 90;
+}
+
+.tms-search {
+    position: relative;
+    max-width: 300px;
+    width: 100%;
+}
+
+.tms-search i {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+}
+
+.tms-search input {
+    width: 100%;
+    padding: 8px 12px 8px 36px;
+    border-radius: 20px;
+    border: 1px solid var(--border-color);
+    background-color: #f5f5f5;
+    outline: none;
+    font-size: 13px;
+    transition: all var(--transition-speed);
+}
+
+.tms-search input:focus {
+    background-color: #ffffff;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(24,144,255,0.2);
+}
+
+.tms-topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.tms-action-icon {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    position: relative;
+    cursor: pointer;
+    transition: color var(--transition-speed);
+}
+
+.tms-action-icon:hover {
+    color: var(--text-primary);
+}
+
+.tms-badge-dot {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 8px;
+    height: 8px;
+    background-color: var(--danger-color);
+    border-radius: 50%;
+    border: 2px solid #ffffff;
+}
+
+.tms-user-profile {
+    background: transparent;
+    border: 0;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 8px;
+    transition: background-color var(--transition-speed);
+}
+
+.tms-user-profile:hover,
+.tms-user-profile:focus-visible {
+    background-color: var(--surface-hover);
+    outline: none;
+}
+
+.tms-user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.tms-user-info {
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.tms-user-menu {
+    position: relative;
+}
+
+.tms-user-menu-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    border: 0;
+    background: transparent;
+    cursor: default;
+}
+
+.tms-user-chevron {
+    color: var(--text-secondary);
+    font-size: 12px;
+}
+
+.tms-user-dropdown {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    z-index: 1001;
+    min-width: 220px;
+    overflow: hidden;
+    background-color: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.14);
+}
+
+.tms-user-dropdown-header {
+    display: grid;
+    gap: 2px;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.tms-user-dropdown-header strong {
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.tms-user-dropdown-header span {
+    color: var(--text-secondary);
+    font-size: 12px;
+}
+
+.tms-user-dropdown-item {
+    width: 100%;
+    border: 0;
+    background: transparent;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    text-align: left;
+}
+
+.tms-user-dropdown-item:hover,
+.tms-user-dropdown-item:focus-visible {
+    background-color: var(--surface-hover);
+    outline: none;
+}
+
+/* Content Frame */
+.tms-content {
+    padding: 24px;
+    flex: 1;
+}
+
+/* Premium Card widgets */
+.tms-card {
+    background-color: var(--surface-card);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 1px 2px 0 rgba(0,0,0,0.03);
+    padding: 24px;
+    transition: transform var(--transition-speed), box-shadow var(--transition-speed);
+}
+
+.tms-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+/* KPI Widgets */
+.tms-kpi-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.tms-kpi-info h6 {
+    margin: 0 0 8px 0;
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.tms-kpi-info h2 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 700;
+}
+
+.tms-kpi-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+/* Status Pill Badges */
+.tms-badge {
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.tms-badge-success {
+    background-color: var(--success-bg);
+    color: var(--success-color);
+    border: 1px solid var(--success-border);
+}
+
+.tms-badge-warning {
+    background-color: var(--warning-bg);
+    color: var(--warning-color);
+    border: 1px solid var(--warning-border);
+}
+
+.tms-badge-danger {
+    background-color: var(--danger-bg);
+    color: var(--danger-color);
+    border: 1px solid var(--danger-border);
+}
+
+/* Custom Table */
+.tms-table {
+    width: 100%;
+    margin-bottom: 0;
+    color: var(--text-primary);
+    border-collapse: collapse;
+}
+
+.tms-table th {
+    background-color: #fafafa;
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 13px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border-color);
+    text-align: left;
+}
+
+.tms-table td {
+    padding: 14px 16px;
+    font-size: 13.5px;
+    border-bottom: 1px solid var(--border-color);
+    vertical-align: middle;
+}
+
+.tms-table tbody tr {
+    transition: background-color var(--transition-speed);
+}
+
+.tms-table tbody tr:hover {
+    background-color: #fafafa;
+}
+
+/* Responsive side nav for mobile */
+@media (max-width: 768px) {
+    .tms-sidebar {
+        width: 0;
+        overflow: hidden;
+        position: fixed;
+    }
+    .tms-sidebar.open {
+        width: var(--sidebar-width);
+    }
+}

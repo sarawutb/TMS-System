@@ -1,0 +1,137 @@
+@page "/shipments"
+@attribute [Authorize]
+@inject ShipmentListViewModel ViewModel
+
+<PageTitle>Shipments - TMS Control Room</PageTitle>
+
+<div class="tms-content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="fw-bold text-gray-900 m-0">Shipments</h4>
+            <p class="text-muted small m-0">Track and manage active cargo shipments</p>
+        </div>
+    </div>
+
+    <!-- Filters Row -->
+    <div class="tms-card mb-4" style="padding: 16px;">
+        <div class="row g-3">
+            <div class="col-md-5 col-sm-12">
+                <div class="position-relative">
+                    <input type="text" class="form-control form-control-sm ps-5" style="border-radius: 6px; height: 38px;"
+                           placeholder="Search by Shipment No..." @bind="ViewModel.SearchQuery" @bind:event="oninput" />
+                    <i class="bi bi-search position-absolute text-muted" style="left: 16px; top: 50%; transform: translateY(-50%);"></i>
+                </div>
+            </div>
+            <div class="col-md-4 col-sm-6">
+                <select class="form-select form-select-sm" style="border-radius: 6px; height: 38px;" @bind="ViewModel.SelectedStatus">
+                    <option value="">All Statuses</option>
+                    <option value="Created">Created</option>
+                    <option value="Packed">Packed</option>
+                    <option value="Loaded">Loaded</option>
+                    <option value="Dispatched">Dispatched</option>
+                    <option value="Delivered">Delivered</option>
+                    <option value="Cancelled">Cancelled</option>
+                </select>
+            </div>
+            <div class="col-md-3 col-sm-6 text-end">
+                <button class="btn btn-outline-secondary w-100 fw-semibold" style="border-radius: 6px; height: 38px;" @onclick="ViewModel.ClearFilters">
+                    CLEAR
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shipments Table Card -->
+    <div class="tms-card p-0 overflow-hidden">
+        @if (ViewModel.IsLoading)
+        {
+            <div class="p-5 text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="text-muted mt-2 small">Loading shipments...</p>
+            </div>
+        }
+        else if (ViewModel.FilteredShipments.Count == 0)
+        {
+            <div class="p-5 text-center">
+                <i class="bi bi-box-seam fs-1 text-muted"></i>
+                <h5 class="mt-3 fw-semibold text-gray-800">No Shipments Found</h5>
+                <p class="text-muted small">No active shipments matching your filters.</p>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="tms-table">
+                    <thead>
+                        <tr>
+                            <th>SHIPMENT NO</th>
+                            <th>ORDER REF</th>
+                            <th>CARRIER</th>
+                            <th>VEHICLE PLATE</th>
+                            <th>ASSIGNED DRIVER</th>
+                            <th>PLANNED DELIVERY</th>
+                            <th>LATEST ETA</th>
+                            <th>STATUS</th>
+                            <th class="text-end">ACTIONS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var shipment in ViewModel.FilteredShipments)
+                        {
+                            <tr>
+                                <td class="fw-semibold text-primary" style="cursor: pointer;" @onclick="() => ViewModel.ViewDetail(shipment.ShipmentId)">
+                                    @shipment.ShipmentNo
+                                </td>
+                                <td>
+                                    @if (shipment.TransportOrderId.HasValue)
+                                    {
+                                        <a href="transport-orders/@shipment.TransportOrderId" class="fw-semibold">
+                                            @ViewModel.GetOrderNo(shipment.TransportOrderId.Value)
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td>@ViewModel.GetCarrierName(shipment.CarrierId)</td>
+                                <td>@ViewModel.GetVehiclePlate(shipment.VehicleId)</td>
+                                <td>@ViewModel.GetDriverName(shipment.DriverId)</td>
+                                <td>@(shipment.PlannedDeliveryDate?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
+                                <td>
+                                    @if (shipment.LatestEta.HasValue)
+                                    {
+                                        <span>@shipment.LatestEta.Value.ToString("yyyy-MM-dd HH:mm")</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small">-</span>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="tms-badge @ViewModel.GetStatusBadgeClass(shipment.ShipmentStatus)">
+                                        @shipment.ShipmentStatus
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    <button class="btn btn-sm btn-light border-0" title="View details" @onclick="() => ViewModel.ViewDetail(shipment.ShipmentId)">
+                                        <i class="bi bi-eye"></i> View
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await ViewModel.InitializeAsync();
+    }
+}

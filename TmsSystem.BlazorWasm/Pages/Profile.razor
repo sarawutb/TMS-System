@@ -1,0 +1,86 @@
+@page "/profile"
+@attribute [Authorize]
+@inject AuthSessionService AuthSessionService
+
+<PageTitle>Profile - TMS Control Room</PageTitle>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <h3 class="fw-semibold text-gray-900 m-0">Profile</h3>
+        <p class="text-muted small m-0 mt-1">Account and role information for the current session.</p>
+    </div>
+</div>
+
+<div class="tms-card" style="max-width: 680px;">
+    @if (session is null)
+    {
+        <div class="text-muted small">Loading profile...</div>
+    }
+    else
+    {
+        <div class="d-flex align-items-center gap-3 mb-4">
+            <div class="tms-user-avatar" style="width: 48px; height: 48px; font-size: 18px;">@UserInitials</div>
+            <div>
+                <h5 class="fw-bold m-0">@DisplayName</h5>
+                <p class="text-muted small m-0">@session.UserName</p>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-12 col-md-6">
+                <span class="text-muted small d-block mb-1">Email</span>
+                <strong>@DisplayValue(session.Email)</strong>
+            </div>
+            <div class="col-12 col-md-6">
+                <span class="text-muted small d-block mb-1">Role</span>
+                <strong>@DisplayValue(UserRole)</strong>
+            </div>
+            <div class="col-12 col-md-6">
+                <span class="text-muted small d-block mb-1">Role Code</span>
+                <strong>@DisplayValue(session.RoleCode)</strong>
+            </div>
+            <div class="col-12 col-md-6">
+                <span class="text-muted small d-block mb-1">Session Expires</span>
+                <strong>@session.ExpiresAtUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</strong>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private AuthUserSession? session;
+
+    private string DisplayName => string.IsNullOrWhiteSpace(session?.FullName)
+        ? session?.UserName ?? "User"
+        : session.FullName;
+
+    private string UserRole => string.IsNullOrWhiteSpace(session?.RoleName)
+        ? session?.RoleCode ?? string.Empty
+        : session.RoleName;
+
+    private string UserInitials
+    {
+        get
+        {
+            var source = DisplayName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (source.Length >= 2)
+            {
+                return $"{source[0][0]}{source[1][0]}".ToUpperInvariant();
+            }
+
+            return DisplayName.Length >= 2
+                ? DisplayName[..2].ToUpperInvariant()
+                : DisplayName[..1].ToUpperInvariant();
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        session = await AuthSessionService.GetCurrentSessionAsync();
+    }
+
+    private static string DisplayValue(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? "-" : value;
+    }
+}

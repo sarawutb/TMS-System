@@ -1,0 +1,123 @@
+@inherits LayoutComponentBase
+@inject AuthSessionService AuthSessionService
+@inject NavigationManager NavigationManager
+
+<div class="tms-layout">
+    <div class="tms-sidebar">
+        <NavMenu />
+    </div>
+
+    <div class="tms-main">
+        <div class="tms-topbar">
+            <div class="tms-search">
+                <i class="bi bi-search"></i>
+                <input type="text" placeholder="Search orders, shipments, tracking..." />
+            </div>
+            
+            <div class="tms-topbar-actions">
+                <div class="tms-action-icon">
+                    <i class="bi bi-bell"></i>
+                    <span class="tms-badge-dot"></span>
+                </div>
+                
+                <div class="tms-action-icon">
+                    <i class="bi bi-shield-lock"></i>
+                </div>
+                
+                <div class="tms-user-menu">
+                    @if (isUserMenuOpen)
+                    {
+                        <button class="tms-user-menu-backdrop" type="button" aria-label="Close user menu" @onclick="CloseUserMenu"></button>
+                    }
+
+                    <button class="tms-user-profile" type="button" @onclick="ToggleUserMenu" aria-expanded="@isUserMenuOpen" aria-label="User menu">
+                        <div class="tms-user-avatar">@UserInitials</div>
+                        <div class="tms-user-info d-none d-md-block">
+                            <span>@DisplayName</span>
+                        </div>
+                        <i class="bi bi-chevron-down tms-user-chevron"></i>
+                    </button>
+
+                    @if (isUserMenuOpen)
+                    {
+                        <div class="tms-user-dropdown">
+                            <div class="tms-user-dropdown-header">
+                                <strong>@DisplayName</strong>
+                                <span>@UserRole</span>
+                            </div>
+                            <button class="tms-user-dropdown-item" type="button" @onclick="GoToProfile">
+                                <i class="bi bi-person-circle"></i>
+                                <span>Profile</span>
+                            </button>
+                            <button class="tms-user-dropdown-item text-danger" type="button" @onclick="LogoutAsync">
+                                <i class="bi bi-box-arrow-right"></i>
+                                <span>Logout</span>
+                            </button>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="tms-content">
+            @Body
+        </div>
+    </div>
+</div>
+
+@code {
+    private AuthUserSession? currentSession;
+    private bool isUserMenuOpen;
+
+    private string DisplayName => string.IsNullOrWhiteSpace(currentSession?.FullName)
+        ? currentSession?.UserName ?? "User"
+        : currentSession.FullName;
+
+    private string UserRole => string.IsNullOrWhiteSpace(currentSession?.RoleName)
+        ? currentSession?.RoleCode ?? "Authenticated user"
+        : currentSession.RoleName;
+
+    private string UserInitials
+    {
+        get
+        {
+            var source = DisplayName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (source.Length >= 2)
+            {
+                return $"{source[0][0]}{source[1][0]}".ToUpperInvariant();
+            }
+
+            return DisplayName.Length >= 2
+                ? DisplayName[..2].ToUpperInvariant()
+                : DisplayName[..1].ToUpperInvariant();
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        currentSession = await AuthSessionService.GetCurrentSessionAsync();
+    }
+
+    private void ToggleUserMenu()
+    {
+        isUserMenuOpen = !isUserMenuOpen;
+    }
+
+    private void CloseUserMenu()
+    {
+        isUserMenuOpen = false;
+    }
+
+    private void GoToProfile()
+    {
+        isUserMenuOpen = false;
+        NavigationManager.NavigateTo("profile");
+    }
+
+    private async Task LogoutAsync()
+    {
+        isUserMenuOpen = false;
+        await AuthSessionService.LogoutAsync();
+        NavigationManager.NavigateTo("login", replace: true);
+    }
+}

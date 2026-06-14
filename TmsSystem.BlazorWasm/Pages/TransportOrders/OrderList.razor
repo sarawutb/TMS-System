@@ -1,0 +1,174 @@
+@page "/transport-orders"
+@attribute [Authorize]
+@inject OrderListViewModel ViewModel
+
+<PageTitle>Transport Orders - TMS Control Room</PageTitle>
+
+<div class="tms-content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="fw-bold text-gray-900 m-0">Transport Orders</h4>
+            <p class="text-muted small m-0">Manage and monitor customer transport requests</p>
+        </div>
+        <button class="btn btn-primary fw-semibold px-4" style="border-radius: 6px;" @onclick="ViewModel.CreateNewOrder">
+            <i class="bi bi-plus-lg me-2"></i>CREATE ORDER
+        </button>
+    </div>
+
+    <!-- Filters Row -->
+    <div class="tms-card mb-4" style="padding: 16px;">
+        <div class="row g-3">
+            <div class="col-md-4 col-sm-12">
+                <div class="position-relative">
+                    <input type="text" class="form-control form-control-sm ps-5" style="border-radius: 6px; height: 38px;"
+                           placeholder="Search by Order No..." @bind="ViewModel.SearchQuery" @bind:event="oninput" />
+                    <i class="bi bi-search position-absolute text-muted" style="left: 16px; top: 50%; transform: translateY(-50%);"></i>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <select class="form-select form-select-sm" style="border-radius: 6px; height: 38px;" @bind="ViewModel.SelectedPriority">
+                    <option value="">All Priorities</option>
+                    <option value="High">High</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Low">Low</option>
+                </select>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <select class="form-select form-select-sm" style="border-radius: 6px; height: 38px;" @bind="ViewModel.SelectedStatus">
+                    <option value="">All Statuses</option>
+                    <option value="New">New</option>
+                    <option value="Draft">Draft</option>
+                    <option value="Dispatched">Dispatched</option>
+                    <option value="Completed">Completed</option>
+                    <option value="Cancelled">Cancelled</option>
+                </select>
+            </div>
+            <div class="col-md-2 col-sm-12 text-end">
+                <button class="btn btn-outline-secondary w-100 fw-semibold" style="border-radius: 6px; height: 38px;" @onclick="ViewModel.ClearFilters">
+                    CLEAR
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Orders Table Card -->
+    <div class="tms-card p-0 overflow-hidden">
+        @if (ViewModel.IsLoading)
+        {
+            <div class="p-5 text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="text-muted mt-2 small">Loading transport orders...</p>
+            </div>
+        }
+        else if (ViewModel.FilteredOrders.Count == 0)
+        {
+            <div class="p-5 text-center">
+                <i class="bi bi-file-earmark-x fs-1 text-muted"></i>
+                <h5 class="mt-3 fw-semibold text-gray-800">No Orders Found</h5>
+                <p class="text-muted small">Try adjusting your filters or create a new order.</p>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="tms-table">
+                    <thead>
+                        <tr>
+                            <th>ORDER NO</th>
+                            <th>CUSTOMER</th>
+                            <th>FACTORY</th>
+                            <th>ROUTE (FROM - TO)</th>
+                            <th>PICKUP DATE</th>
+                            <th>PRIORITY</th>
+                            <th>TEMP</th>
+                            <th>STATUS</th>
+                            <th class="text-end">ACTIONS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var order in ViewModel.FilteredOrders)
+                        {
+                            <tr>
+                                <td class="fw-semibold text-primary" style="cursor: pointer;" @onclick="() => ViewModel.ViewDetail(order.TransportOrderId)">
+                                    @order.TransportOrderNo
+                                </td>
+                                <td>@ViewModel.GetCustomerName(order.CustomerId)</td>
+                                <td>@ViewModel.GetFactoryName(order.FactoryId)</td>
+                                <td class="small">
+                                    <span class="fw-semibold">@ViewModel.GetLocationName(order.PickupLocationId)</span>
+                                    <i class="bi bi-arrow-right mx-1 text-muted"></i>
+                                    <span class="text-muted">@ViewModel.GetLocationName(order.DeliveryLocationId)</span>
+                                </td>
+                                <td>@(order.RequestedPickupDate?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
+                                <td>
+                                    <span class="tms-badge @ViewModel.GetPriorityBadgeClass(order.Priority)">
+                                        @order.Priority
+                                    </span>
+                                </td>
+                                <td>
+                                    @if (order.TemperatureRequired)
+                                    {
+                                        <span class="tms-badge tms-badge-danger" style="font-size: 10px;">
+                                            <i class="bi bi-thermometer-half"></i> REQ
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small">-</span>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="tms-badge @ViewModel.GetStatusBadgeClass(order.Status)">
+                                        @order.Status
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    <button class="btn btn-sm btn-light border-0 me-1" title="View details" @onclick="() => ViewModel.ViewDetail(order.TransportOrderId)">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-light border-0 me-1" title="Edit" @onclick="() => ViewModel.EditOrder(order.TransportOrderId)">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-light-danger border-0" title="Delete" @onclick="() => ViewModel.ConfirmDelete(order.TransportOrderId, order.TransportOrderNo)">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+@if (ViewModel.ShowDeleteModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow" style="border-radius: 8px;">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold text-danger">Delete Transport Order</h5>
+                    <button type="button" class="btn-close" @onclick="ViewModel.CloseDeleteModal"></button>
+                </div>
+                <div class="modal-body py-3">
+                    <p class="m-0">Are you sure you want to delete order <strong class="text-primary">@ViewModel.DeleteOrderNo</strong>? This action cannot be undone.</p>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light fw-semibold" style="border-radius: 6px;" @onclick="ViewModel.CloseDeleteModal">Cancel</button>
+                    <button type="button" class="btn btn-danger fw-semibold" style="border-radius: 6px;" @onclick="ViewModel.ExecuteDeleteAsync">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await ViewModel.InitializeAsync();
+    }
+}

@@ -1,0 +1,58 @@
+@page "/login"
+@layout EmptyLayout
+@inject LoginViewModel ViewModel
+
+<PageTitle>Login - TMS Control Room</PageTitle>
+
+<div class="d-flex align-items-center justify-content-center min-vh-100 bg-light">
+    <div class="card shadow-sm border-0 p-4" style="max-width: 400px; width: 100%; border-radius: 8px;">
+        <div class="text-center mb-4">
+            <div class="d-inline-flex align-items-center justify-content-center bg-primary text-white rounded-circle mb-3" style="width: 56px; height: 56px;">
+                <i class="bi bi-truck-flatbed fs-3"></i>
+            </div>
+            <h4 class="fw-bold text-gray-900 m-0">TMS CONTROL ROOM</h4>
+            <p class="text-muted small m-0 mt-1">Please sign in to access your dashboard</p>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(ViewModel.ErrorMessage))
+        {
+            <div class="alert alert-danger py-2 px-3 small border-0 mb-3" style="border-radius: 6px;">
+                <i class="bi bi-exclamation-circle-fill me-2"></i>@ViewModel.ErrorMessage
+            </div>
+        }
+
+        <EditForm Model="@ViewModel" OnValidSubmit="ViewModel.HandleLoginAsync">
+            <DataAnnotationsValidator />
+            
+            <div class="mb-3">
+                <label class="form-label text-muted small fw-semibold">USERNAME</label>
+                <div class="position-relative">
+                    <InputText @bind-Value="ViewModel.UserName" class="form-control" style="border-radius: 6px; padding-left: 36px;" placeholder="Enter username" />
+                    <i class="bi bi-person position-absolute text-muted" style="left: 12px; top: 50%; transform: translateY(-50%);"></i>
+                </div>
+                <ValidationMessage For="@(() => ViewModel.UserName)" class="text-danger small mt-1" />
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label text-muted small fw-semibold">PASSWORD</label>
+                <div class="position-relative">
+                    <InputText @bind-Value="ViewModel.Password" type="password" class="form-control" style="border-radius: 6px; padding-left: 36px;" placeholder="Enter password" />
+                    <i class="bi bi-lock position-absolute text-muted" style="left: 12px; top: 50%; transform: translateY(-50%);"></i>
+                </div>
+                <ValidationMessage For="@(() => ViewModel.Password)" class="text-danger small mt-1" />
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold" style="border-radius: 6px;" disabled="@ViewModel.IsLoggingIn">
+                @if (ViewModel.IsLoggingIn)
+                {
+                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    <span>Signing in...</span>
+                }
+                else
+                {
+                    <span>SIGN IN</span>
+                }
+            </button>
+        </EditForm>
+    </div>
+</div>

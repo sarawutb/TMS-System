@@ -1,0 +1,171 @@
+@page "/"
+@attribute [Authorize]
+
+<PageTitle>TMS Control Tower Dashboard</PageTitle>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <h3 class="fw-semibold text-gray-900 m-0">TMS Control Tower Dashboard</h3>
+        <p class="text-muted small m-0 mt-1">Real-time logistics execution tracking and predictive alerts.</p>
+    </div>
+</div>
+
+<!-- KPI Metrics Grid -->
+<div class="row g-4 mb-4">
+    <!-- Active Shipments -->
+    <div class="col-12 col-md-6 col-lg-3">
+        <div class="tms-card tms-kpi-card">
+            <div class="tms-kpi-info">
+                <h6>Active Shipments</h6>
+                <h2>42</h2>
+            </div>
+            <div class="tms-kpi-icon" style="background-color: var(--primary-bg); color: var(--primary-color);">
+                <i class="bi bi-truck"></i>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Delayed Shipments -->
+    <div class="col-12 col-md-6 col-lg-3">
+        <div class="tms-card tms-kpi-card">
+            <div class="tms-kpi-info">
+                <h6>Delayed Shipments</h6>
+                <h2>3</h2>
+            </div>
+            <div class="tms-kpi-icon" style="background-color: var(--warning-bg); color: var(--warning-color);">
+                <i class="bi bi-clock-history"></i>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Critical Exceptions -->
+    <div class="col-12 col-md-6 col-lg-3">
+        <div class="tms-card tms-kpi-card">
+            <div class="tms-kpi-info">
+                <h6>Critical Exceptions</h6>
+                <h2>1</h2>
+            </div>
+            <div class="tms-kpi-icon" style="background-color: var(--danger-bg); color: var(--danger-color);">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Completed Today -->
+    <div class="col-12 col-md-6 col-lg-3">
+        <div class="tms-card tms-kpi-card">
+            <div class="tms-kpi-info">
+                <h6>Completed Today</h6>
+                <h2>124</h2>
+            </div>
+            <div class="tms-kpi-icon" style="background-color: var(--success-bg); color: var(--success-color);">
+                <i class="bi bi-check-circle-fill"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- Live Shipments Table -->
+    <div class="col-12 col-xl-8">
+        <div class="tms-card h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-semibold m-0"><i class="bi bi-broadcast me-2 text-primary"></i>Live Shipments Execution</h5>
+                <button class="btn btn-sm btn-outline-primary"><i class="bi bi-arrow-clockwise me-1"></i> Refresh</button>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="tms-table">
+                    <thead>
+                        <tr>
+                            <th>Shipment No.</th>
+                            <th>Carrier</th>
+                            <th>Vehicle</th>
+                            <th>Route</th>
+                            <th>ETA</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var shipment in sampleShipments)
+                        {
+                            <tr>
+                                <td class="fw-semibold text-primary">@shipment.No</td>
+                                <td>@shipment.Carrier</td>
+                                <td><i class="bi bi-truck me-1 text-muted"></i>@shipment.Vehicle</td>
+                                <td class="text-truncate" style="max-width: 200px;">@shipment.Route</td>
+                                <td>@shipment.Eta.ToString("yyyy-MM-dd HH:mm")</td>
+                                <td>
+                                    <span class="tms-badge @GetStatusClass(shipment.Status)">@shipment.Status</span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- IoT Cold Chain Monitor -->
+    <div class="col-12 col-xl-4">
+        <div class="tms-card h-100">
+            <h5 class="fw-semibold mb-3"><i class="bi bi-thermometer-half me-2 text-info"></i>IoT Cold Chain Monitoring</h5>
+            
+            <div class="p-3 mb-3 rounded border" style="background-color: #fafafa;">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="fw-semibold text-muted small">DEVICE CODE</span>
+                    <span class="tms-badge tms-badge-success">CONNECTED</span>
+                </div>
+                <h6 class="fw-bold m-0 text-primary">IOT-REEFER-09</h6>
+                <p class="text-muted small m-0 mt-1">Vehicle: 71-9231 BKK | Shipment: SH-2026-0081</p>
+                
+                <hr class="my-3 text-muted" />
+                
+                <div class="row">
+                    <div class="col-6 text-center border-end">
+                        <span class="text-muted small d-block mb-1">TEMPERATURE</span>
+                        <h3 class="fw-bold text-success m-0">-18.4°C</h3>
+                        <span class="text-muted small" style="font-size: 11px;">Limit: -22°C to -15°C</span>
+                    </div>
+                    <div class="col-6 text-center">
+                        <span class="text-muted small d-block mb-1">HUMIDITY</span>
+                        <h3 class="fw-bold text-info m-0">62.5%</h3>
+                        <span class="text-muted small" style="font-size: 11px;">Limit: 50% to 70%</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="p-3 rounded border bg-light">
+                <div class="d-flex align-items-start gap-3">
+                    <div class="fs-4 text-warning mt-1"><i class="bi bi-bell-fill"></i></div>
+                    <div>
+                        <h6 class="fw-bold text-gray-900 m-0">Recent Alert: Temp Warning</h6>
+                        <p class="text-muted small m-0 mt-1">Device IOT-REEFER-03 temp rose to -14.2°C at 15:12. Driver notified via App.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<ShipmentMock> sampleShipments = new()
+    {
+        new("SH-2026-0081", "Kerry Logistics", "71-9231 BKK", "BKK Factory -> Chiang Mai WH", DateTime.Now.AddHours(2), "In Transit"),
+        new("SH-2026-0082", "SCG Logistics", "72-4012 CMI", "Chiang Mai Hub -> Lamphun Customer", DateTime.Now.AddMinutes(45), "At Delivery"),
+        new("SH-2026-0083", "Kerry Logistics", "65-1102 BKK", "BKK Factory -> Khon Kaen WH", DateTime.Now.AddHours(5).AddMinutes(15), "Delayed"),
+        new("SH-2026-0084", "Internal Fleet", "43-8822 HNY", "Hat Yai WH -> Songkhla Factory", DateTime.Now.AddHours(1).AddMinutes(10), "In Transit"),
+        new("SH-2026-0085", "Sittipong Transport", "73-0988 BKK", "BKK Port -> BKK Factory", DateTime.Now.AddHours(3).AddMinutes(30), "In Transit")
+    };
+
+    private string GetStatusClass(string status) => status switch
+    {
+        "In Transit" => "tms-badge-success",
+        "At Delivery" => "tms-badge-success",
+        "Delayed" => "tms-badge-warning",
+        "Exception" => "tms-badge-danger",
+        _ => "tms-badge-warning"
+    };
+
+    private record ShipmentMock(string No, string Carrier, string Vehicle, string Route, DateTime Eta, string Status);
+}

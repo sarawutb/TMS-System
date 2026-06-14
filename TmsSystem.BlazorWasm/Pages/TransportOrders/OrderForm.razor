@@ -1,0 +1,209 @@
+@page "/transport-orders/new"
+@page "/transport-orders/{Id:long}/edit"
+@attribute [Authorize]
+@inject OrderFormViewModel ViewModel
+
+<PageTitle>@(Id.HasValue ? "Edit Order" : "Create Order") - TMS Control Room</PageTitle>
+
+<div class="tms-content">
+    <div class="d-flex align-items-center mb-4">
+        <button class="btn btn-sm btn-outline-secondary me-3 px-3 py-1" style="border-radius: 6px;" @onclick="() => ViewModel.Cancel(Id)">
+            <i class="bi bi-chevron-left me-1"></i> BACK
+        </button>
+        <div>
+            <h4 class="fw-bold text-gray-900 m-0">@(Id.HasValue ? $"Edit Order: {ViewModel.Order.TransportOrderNo}" : "Create Transport Order")</h4>
+            <p class="text-muted small m-0">@(Id.HasValue ? "Update details for this transport order" : "Log a new transport order request into the system")</p>
+        </div>
+    </div>
+
+    @if (ViewModel.IsLoading)
+    {
+        <div class="tms-card text-center p-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="text-muted mt-2 small">Loading form data...</p>
+        </div>
+    }
+    else
+    {
+        @if (!string.IsNullOrWhiteSpace(ViewModel.ErrorMessage))
+        {
+            <div class="alert alert-danger py-2 px-3 small border-0 mb-4" style="border-radius: 6px;">
+                <i class="bi bi-exclamation-circle-fill me-2"></i>@ViewModel.ErrorMessage
+            </div>
+        }
+
+        <div class="tms-card">
+            <EditForm Model="@ViewModel.Order" OnValidSubmit="() => ViewModel.SaveOrderAsync(Id)">
+                <DataAnnotationsValidator />
+
+                <div class="row g-4">
+                    <!-- Section: Order Info -->
+                    <div class="col-md-12">
+                        <h6 class="fw-bold text-primary border-bottom pb-2 mb-3">Order Details</h6>
+                    </div>
+
+                    <div class="col-md-4 col-sm-12">
+                        <label class="form-label text-muted small fw-semibold">ORDER NUMBER</label>
+                        <InputText @bind-Value="ViewModel.Order.TransportOrderNo" class="form-control" style="border-radius: 6px;" placeholder="Leave empty for auto-generation" disabled="@Id.HasValue" />
+                        <ValidationMessage For="@(() => ViewModel.Order.TransportOrderNo)" class="text-danger small mt-1" />
+                    </div>
+
+                    <div class="col-md-4 col-sm-6">
+                        <label class="form-label text-muted small fw-semibold">SOURCE SYSTEM</label>
+                        <InputText @bind-Value="ViewModel.Order.SourceSystem" class="form-control" style="border-radius: 6px;" placeholder="e.g. TMS_PORTAL" />
+                        <ValidationMessage For="@(() => ViewModel.Order.SourceSystem)" class="text-danger small mt-1" />
+                    </div>
+
+                    <div class="col-md-4 col-sm-6">
+                        <label class="form-label text-muted small fw-semibold">SOURCE DOCUMENT NO</label>
+                        <InputText @bind-Value="ViewModel.Order.SourceDocumentNo" class="form-control" style="border-radius: 6px;" placeholder="e.g. SO-10043" />
+                        <ValidationMessage For="@(() => ViewModel.Order.SourceDocumentNo)" class="text-danger small mt-1" />
+                    </div>
+
+                    <!-- Section: Parties -->
+                    <div class="col-md-12 mt-5">
+                        <h6 class="fw-bold text-primary border-bottom pb-2 mb-3">Associated Parties</h6>
+                    </div>
+
+                    <div class="col-md-6 col-sm-12">
+                        <label class="form-label text-muted small fw-semibold">FACTORY</label>
+                        <select class="form-select" style="border-radius: 6px;" @bind="ViewModel.Order.FactoryId">
+                            <option value="0">-- Select Factory --</option>
+                            @foreach (var f in ViewModel.Factories)
+                            {
+                                <option value="@f.FactoryId">@f.FactoryName (@f.FactoryCode)</option>
+                            }
+                        </select>
+                        @if (ViewModel.Order.FactoryId == 0)
+                        {
+                            <span class="text-danger small mt-1 d-block">Please select a factory.</span>
+                        }
+                    </div>
+
+                    <div class="col-md-6 col-sm-12">
+                        <label class="form-label text-muted small fw-semibold">CUSTOMER</label>
+                        <select class="form-select" style="border-radius: 6px;" @bind="ViewModel.Order.CustomerId">
+                            <option value="">-- Select Customer --</option>
+                            @foreach (var c in ViewModel.Customers)
+                            {
+                                <option value="@c.CustomerId">@c.CustomerName (@c.CustomerCode)</option>
+                            }
+                        </select>
+                        @if (!ViewModel.Order.CustomerId.HasValue || ViewModel.Order.CustomerId.Value == 0)
+                        {
+                            <span class="text-danger small mt-1 d-block">Please select a customer.</span>
+                        }
+                    </div>
+
+                    <!-- Section: Routing -->
+                    <div class="col-md-12 mt-5">
+                        <h6 class="fw-bold text-primary border-bottom pb-2 mb-3">Routing & Dates</h6>
+                    </div>
+
+                    <div class="col-md-6 col-sm-12">
+                        <label class="form-label text-muted small fw-semibold">PICKUP LOCATION</label>
+                        <select class="form-select" style="border-radius: 6px;" @bind="ViewModel.Order.PickupLocationId">
+                            <option value="0">-- Select Pickup Location --</option>
+                            @foreach (var l in ViewModel.Locations)
+                            {
+                                <option value="@l.LocationId">@l.LocationName (@l.LocationCode)</option>
+                            }
+                        </select>
+                        @if (ViewModel.Order.PickupLocationId == 0)
+                        {
+                            <span class="text-danger small mt-1 d-block">Please select a pickup location.</span>
+                        }
+                    </div>
+
+                    <div class="col-md-6 col-sm-12">
+                        <label class="form-label text-muted small fw-semibold">DELIVERY LOCATION</label>
+                        <select class="form-select" style="border-radius: 6px;" @bind="ViewModel.Order.DeliveryLocationId">
+                            <option value="0">-- Select Delivery Location --</option>
+                            @foreach (var l in ViewModel.Locations)
+                            {
+                                <option value="@l.LocationId">@l.LocationName (@l.LocationCode)</option>
+                            }
+                        </select>
+                        @if (ViewModel.Order.DeliveryLocationId == 0)
+                        {
+                            <span class="text-danger small mt-1 d-block">Please select a delivery location.</span>
+                        }
+                    </div>
+
+                    <div class="col-md-6 col-sm-12">
+                        <label class="form-label text-muted small fw-semibold">REQUESTED PICKUP DATE</label>
+                        <input type="datetime-local" class="form-control" style="border-radius: 6px;" 
+                               value="@ViewModel.FormattedPickupDate" @onchange="@(e => ViewModel.OnPickupDateChanged(e.Value?.ToString() ?? ""))" />
+                    </div>
+
+                    <div class="col-md-6 col-sm-12">
+                        <label class="form-label text-muted small fw-semibold">REQUESTED DELIVERY DATE</label>
+                        <input type="datetime-local" class="form-control" style="border-radius: 6px;" 
+                               value="@ViewModel.FormattedDeliveryDate" @onchange="@(e => ViewModel.OnDeliveryDateChanged(e.Value?.ToString() ?? ""))" />
+                    </div>
+
+                    <!-- Section: Options & Settings -->
+                    <div class="col-md-12 mt-5">
+                        <h6 class="fw-bold text-primary border-bottom pb-2 mb-3">Preferences & Logistics</h6>
+                    </div>
+
+                    <div class="col-md-4 col-sm-6">
+                        <label class="form-label text-muted small fw-semibold">PRIORITY</label>
+                        <select class="form-select" style="border-radius: 6px;" @bind="ViewModel.Order.Priority">
+                            <option value="High">High</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Low">Low</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4 col-sm-6">
+                        <label class="form-label text-muted small fw-semibold">STATUS</label>
+                        <select class="form-select" style="border-radius: 6px;" @bind="ViewModel.Order.Status">
+                            <option value="New">New</option>
+                            <option value="Draft">Draft</option>
+                            <option value="Dispatched">Dispatched</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Cancelled">Cancelled</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4 col-sm-12 d-flex align-items-center mt-auto" style="height: 38px;">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="tempReq" @bind="ViewModel.Order.TemperatureRequired" />
+                            <label class="form-check-label fw-semibold text-muted small" for="tempReq">TEMPERATURE CONTROL REQUIRED</label>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="col-md-12 mt-5 border-top pt-4 text-end">
+                        <button type="button" class="btn btn-light fw-semibold px-4 me-2" style="border-radius: 6px; height: 40px;" @onclick="() => ViewModel.Cancel(Id)">
+                            CANCEL
+                        </button>
+                        <button type="submit" class="btn btn-primary fw-semibold px-4" style="border-radius: 6px; height: 40px;" disabled="@ViewModel.IsSaving">
+                            @if (ViewModel.IsSaving)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                <span>SAVING...</span>
+                            }
+                            else
+                            {
+                                <span>SAVE ORDER</span>
+                            }
+                        </button>
+                    </div>
+                </div>
+            </EditForm>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public long? Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ViewModel.InitializeAsync(Id);
+    }
+}

@@ -1,0 +1,37 @@
+## Core build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Re]leases/
+x64/
+x86/
+[Bb]in/
+[Oo]bj/
+[Ex]ternal/
+
+## Visual Studio cache and settings
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+## JetBrains Rider (If anyone uses it)
+.idea/
+*.sln.iml
+
+## NuGet Packages
+*.nuget.props
+*.nuget.targets
+packages/
+
+## VS Code settings (Optional but recommended)
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+## Local user secrets & OS junk
+.DS_Store
+Thumbs.db
