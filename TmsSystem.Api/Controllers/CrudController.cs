@@ -11,6 +11,8 @@ namespace TmsSystem.Api.Controllers;
 [Authorize]
 public abstract class CrudController<TEntity>(TmsDbContext dbContext) : TmsControllerBase where TEntity : class
 {
+    protected TmsDbContext Context => dbContext;
+
     [HttpGet]
     public virtual async Task<IActionResult> GetAll(CancellationToken cancellationToken)
         => ApiSuccess(await dbContext.Set<TEntity>().AsNoTracking().ToListAsync(cancellationToken));

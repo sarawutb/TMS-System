@@ -1,3 +1,5 @@
+@inject NavigationManager NavigationManager
+
 <div class="tms-sidebar-brand">
     <i class="bi bi-truck-flatbed me-2"></i>
     <span>TMS CONTROL ROOM</span>
@@ -13,9 +15,45 @@
     <NavLink class="tms-menu-item" href="shipments">
         <i class="bi bi-signpost-split"></i> Shipments
     </NavLink>
-    <NavLink class="tms-menu-item" href="master-data" Match="NavLinkMatch.Prefix">
-        <i class="bi bi-database-gear"></i> Master Data
-    </NavLink>
+    <div class="tms-menu-group">
+        <button class="tms-menu-item tms-menu-toggle @(IsPlanningActive ? "active" : null)" type="button" @onclick="TogglePlanningMenu" aria-expanded="@isPlanningOpen">
+            <span class="tms-menu-toggle-label">
+                <i class="bi bi-diagram-3"></i>
+                <span>Planning</span>
+            </span>
+            <i class="bi bi-chevron-down tms-menu-toggle-icon @(isPlanningOpen ? "open" : null)"></i>
+        </button>
+        @if (isPlanningOpen)
+        {
+            <div class="tms-submenu">
+                <NavLink class="tms-submenu-item" href="planning" Match="NavLinkMatch.All">
+                    <i class="bi bi-columns-gap"></i>
+                    <span>Workbench</span>
+                </NavLink>
+            </div>
+        }
+    </div>
+    <div class="tms-menu-group">
+        <button class="tms-menu-item tms-menu-toggle @(IsMasterDataActive ? "active" : null)" type="button" @onclick="ToggleMasterDataMenu" aria-expanded="@isMasterDataOpen">
+            <span class="tms-menu-toggle-label">
+                <i class="bi bi-database-gear"></i>
+                <span>Master Data</span>
+            </span>
+            <i class="bi bi-chevron-down tms-menu-toggle-icon @(isMasterDataOpen ? "open" : null)"></i>
+        </button>
+        @if (isMasterDataOpen)
+        {
+            <div class="tms-submenu">
+                @foreach (var definition in MasterDataDefinitions.All)
+                {
+                    <NavLink class="tms-submenu-item" href="@($"master-data/{definition.Key}")">
+                        <i class="@definition.IconCss"></i>
+                        <span>@definition.Title</span>
+                    </NavLink>
+                }
+            </div>
+        }
+    </div>
     <NavLink class="tms-menu-item" href="exceptions">
         <i class="bi bi-exclamation-triangle"></i> Exceptions
     </NavLink>
@@ -32,3 +70,30 @@
         <i class="bi bi-people"></i> User Management
     </NavLink>
 </div>
+
+@code {
+    private bool isPlanningOpen;
+    private bool isMasterDataOpen;
+
+    private bool IsPlanningActive => NavigationManager.ToBaseRelativePath(NavigationManager.Uri)
+        .StartsWith("planning", StringComparison.OrdinalIgnoreCase);
+
+    private bool IsMasterDataActive => NavigationManager.ToBaseRelativePath(NavigationManager.Uri)
+        .StartsWith("master-data", StringComparison.OrdinalIgnoreCase);
+
+    protected override void OnInitialized()
+    {
+        isPlanningOpen = IsPlanningActive;
+        isMasterDataOpen = IsMasterDataActive;
+    }
+
+    private void TogglePlanningMenu()
+    {
+        isPlanningOpen = !isPlanningOpen;
+    }
+
+    private void ToggleMasterDataMenu()
+    {
+        isMasterDataOpen = !isMasterDataOpen;
+    }
+}

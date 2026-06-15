@@ -1,0 +1,130 @@
+@page "/planning/routes/{RoutePlanId:long}"
+@attribute [Authorize]
+@inject RoutePlanDetailViewModel ViewModel
+
+<PageTitle>Route Plan Detail - TMS Control Room</PageTitle>
+
+<div class="tms-content">
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+        <div>
+            <button class="btn btn-link p-0 small fw-semibold text-decoration-none mb-2" @onclick="ViewModel.BackToWorkbench">
+                <i class="bi bi-arrow-left me-1"></i>Back to Planning
+            </button>
+            <h4 class="fw-bold text-gray-900 m-0">@(ViewModel.RoutePlan?.RoutePlanNo ?? "Route Plan")</h4>
+            <p class="text-muted small m-0">@ViewModel.RoutePlan?.OptimizationEngine route proposal</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-light border fw-semibold" style="border-radius: 6px;" @onclick="ViewModel.CreateLoadPlanAsync" disabled="@(ViewModel.RoutePlan is null || ViewModel.IsSaving)">
+                <i class="bi bi-box-seam me-2"></i>CREATE LOAD
+            </button>
+            <button class="btn btn-primary fw-semibold px-4" style="border-radius: 6px;" @onclick="ViewModel.ApproveAsync" disabled="@(ViewModel.RoutePlan is null || ViewModel.IsSaving)">
+                <i class="bi bi-check2-circle me-2"></i>APPROVE
+            </button>
+        </div>
+    </div>
+
+    @if (ViewModel.IsLoading)
+    {
+        <div class="p-5 text-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else if (!string.IsNullOrWhiteSpace(ViewModel.ErrorMessage))
+    {
+        <div class="alert alert-danger py-2 px-3 small border-0" style="border-radius: 6px;">
+            <i class="bi bi-exclamation-circle-fill me-2"></i>@ViewModel.ErrorMessage
+        </div>
+    }
+    else if (ViewModel.RoutePlan is not null)
+    {
+        <div class="planning-summary-grid mb-4">
+            <div class="tms-card planning-summary-tile">
+                <span>Distance</span>
+                <strong>@ViewModel.RoutePlan.TotalDistanceKm.ToString("N1") km</strong>
+            </div>
+            <div class="tms-card planning-summary-tile">
+                <span>Duration</span>
+                <strong>@ViewModel.RoutePlan.TotalDurationMinute min</strong>
+            </div>
+            <div class="tms-card planning-summary-tile">
+                <span>Cost</span>
+                <strong>@ViewModel.RoutePlan.EstimatedCost.ToString("N0")</strong>
+            </div>
+            <div class="tms-card planning-summary-tile">
+                <span>Risk</span>
+                <strong>@ViewModel.RoutePlan.RiskScore.ToString("N1")</strong>
+            </div>
+        </div>
+
+        @if (ViewModel.RoutePlan.ComplianceIssues.Count > 0)
+        {
+            <div class="alert alert-warning py-2 px-3 small border-0 mb-4" style="border-radius: 6px;">
+                <i class="bi bi-shield-exclamation me-2"></i>@string.Join(" ", ViewModel.RoutePlan.ComplianceIssues)
+            </div>
+        }
+
+        <div class="tms-card p-0 overflow-hidden">
+            <div class="planning-panel-header">
+                <div>
+                    <h6 class="fw-bold m-0">Stop Sequence</h6>
+                    <span class="text-muted small">Use arrows to manually adjust order before approval</span>
+                </div>
+                <button class="btn btn-sm btn-outline-primary fw-semibold" style="border-radius: 6px;" @onclick="ViewModel.SaveStopOrderAsync" disabled="@ViewModel.IsSaving">
+                    SAVE ORDER
+                </button>
+            </div>
+            <div class="table-responsive">
+                <table class="tms-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 90px;">SEQ</th>
+                            <th>STOP</th>
+                            <th>ORDER</th>
+                            <th>ETA</th>
+                            <th class="text-end">LEG</th>
+                            <th class="text-end">CUMULATIVE</th>
+                            <th class="text-end">MOVE</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (var i = 0; i < ViewModel.EditableStops.Count; i++)
+                        {
+                            var index = i;
+                            var stop = ViewModel.EditableStops[index];
+                            <tr>
+                                <td class="fw-semibold">@stop.Sequence</td>
+                                <td>
+                                    <div class="fw-semibold">@stop.LocationName</div>
+                                    <span class="text-muted small">@stop.StopType</span>
+                                </td>
+                                <td>@stop.TransportOrderNo</td>
+                                <td>@(stop.Eta?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
+                                <td class="text-end">@stop.DistanceFromPreviousKm.ToString("N1") km</td>
+                                <td class="text-end">@stop.CumulativeDistanceKm.ToString("N1") km</td>
+                                <td class="text-end">
+                                    <button class="btn btn-sm btn-light border-0 me-1" title="Move up" @onclick="() => ViewModel.MoveStopUp(index)" disabled="@(index == 0)">
+                                        <i class="bi bi-arrow-up"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-light border-0" title="Move down" @onclick="() => ViewModel.MoveStopDown(index)" disabled="@(index == ViewModel.EditableStops.Count - 1)">
+                                        <i class="bi bi-arrow-down"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public long RoutePlanId { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await ViewModel.InitializeAsync(RoutePlanId);
+    }
+}

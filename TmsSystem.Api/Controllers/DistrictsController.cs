@@ -11,7 +11,7 @@ public sealed class DistrictsController(TmsDbContext dbContext) : CrudController
     [HttpGet("by-province/{provinceId:long}")]
     public async Task<IActionResult> GetByProvince(long provinceId, CancellationToken cancellationToken)
     {
-        var districts = await dbContext.Districts
+        var districts = await Context.Districts
             .AsNoTracking()
             .Where(district => district.ProvinceId == provinceId)
             .OrderBy(district => district.DistrictNameTh)

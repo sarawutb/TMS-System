@@ -1,0 +1,125 @@
+@page "/planning/loads/{LoadPlanId:long}"
+@attribute [Authorize]
+@inject LoadPlanDetailViewModel ViewModel
+
+<PageTitle>Load Plan Detail - TMS Control Room</PageTitle>
+
+<div class="tms-content">
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+        <div>
+            <button class="btn btn-link p-0 small fw-semibold text-decoration-none mb-2" @onclick="ViewModel.BackToWorkbench">
+                <i class="bi bi-arrow-left me-1"></i>Back to Planning
+            </button>
+            <h4 class="fw-bold text-gray-900 m-0">@(ViewModel.LoadPlan?.LoadPlanNo ?? "Load Plan")</h4>
+            <p class="text-muted small m-0">3D load placement and capacity utilization metadata</p>
+        </div>
+        <button class="btn btn-light border fw-semibold" style="border-radius: 6px;" @onclick="ViewModel.ViewRoute" disabled="@(ViewModel.LoadPlan?.RoutePlanId is null)">
+            <i class="bi bi-signpost-split me-2"></i>OPEN ROUTE
+        </button>
+    </div>
+
+    @if (ViewModel.IsLoading)
+    {
+        <div class="p-5 text-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else if (!string.IsNullOrWhiteSpace(ViewModel.ErrorMessage))
+    {
+        <div class="alert alert-danger py-2 px-3 small border-0" style="border-radius: 6px;">
+            <i class="bi bi-exclamation-circle-fill me-2"></i>@ViewModel.ErrorMessage
+        </div>
+    }
+    else if (ViewModel.LoadPlan is not null)
+    {
+        <div class="planning-summary-grid mb-4">
+            <div class="tms-card planning-summary-tile">
+                <span>Weight</span>
+                <strong>@ViewModel.LoadPlan.TotalWeightKg.ToString("N1") kg</strong>
+            </div>
+            <div class="tms-card planning-summary-tile">
+                <span>Volume</span>
+                <strong>@ViewModel.LoadPlan.TotalVolumeM3.ToString("N2") m3</strong>
+            </div>
+            <div class="tms-card planning-summary-tile">
+                <span>Utilization</span>
+                <strong>@ViewModel.LoadPlan.UtilizationPercent.ToString("N1")%</strong>
+            </div>
+            <div class="tms-card planning-summary-tile">
+                <span>Feasible</span>
+                <strong>@(ViewModel.LoadPlan.LoadFeasible ? "Yes" : "Review")</strong>
+            </div>
+        </div>
+
+        @if (ViewModel.LoadPlan.ConstraintIssues.Count > 0)
+        {
+            <div class="alert alert-warning py-2 px-3 small border-0 mb-4" style="border-radius: 6px;">
+                <i class="bi bi-box-arrow-in-down me-2"></i>@string.Join(" ", ViewModel.LoadPlan.ConstraintIssues)
+            </div>
+        }
+
+        <div class="row g-4">
+            <div class="col-xl-4">
+                <div class="tms-card">
+                    <h6 class="fw-bold mb-3">Container</h6>
+                    <div class="planning-load-preview">
+                        <div class="planning-load-box"></div>
+                    </div>
+                    <div class="small text-muted mt-3">
+                        @(ViewModel.LoadPlan.Container.LengthM.ToString("N2"))m L x
+                        @(ViewModel.LoadPlan.Container.WidthM.ToString("N2"))m W x
+                        @(ViewModel.LoadPlan.Container.HeightM.ToString("N2"))m H
+                    </div>
+                    <div class="progress mt-3" style="height: 8px;">
+                        <div class="progress-bar" role="progressbar" style="@($"width: {Math.Min(100m, ViewModel.LoadPlan.UtilizationPercent):0.##}%")"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-8">
+                <div class="tms-card p-0 overflow-hidden">
+                    <div class="planning-panel-header">
+                        <h6 class="fw-bold m-0">3D Placements</h6>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="tms-table">
+                            <thead>
+                                <tr>
+                                    <th>ORDER</th>
+                                    <th class="text-end">DIMENSIONS</th>
+                                    <th class="text-end">WEIGHT</th>
+                                    <th class="text-end">X</th>
+                                    <th class="text-end">Y</th>
+                                    <th class="text-end">Z</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var placement in ViewModel.LoadPlan.Placements)
+                                {
+                                    <tr>
+                                        <td class="fw-semibold text-primary">@placement.TransportOrderNo</td>
+                                        <td class="text-end">@placement.LengthM.ToString("N2") x @placement.WidthM.ToString("N2") x @placement.HeightM.ToString("N2") m</td>
+                                        <td class="text-end">@placement.WeightKg.ToString("N1") kg</td>
+                                        <td class="text-end">@placement.X.ToString("N2")</td>
+                                        <td class="text-end">@placement.Y.ToString("N2")</td>
+                                        <td class="text-end">@placement.Z.ToString("N2")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public long LoadPlanId { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await ViewModel.InitializeAsync(LoadPlanId);
+    }
+}

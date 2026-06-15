@@ -1,0 +1,196 @@
+@page "/planning"
+@attribute [Authorize]
+@inject PlanningWorkbenchViewModel ViewModel
+
+<PageTitle>Planning Workbench - TMS Control Room</PageTitle>
+
+<div class="tms-content">
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+        <div>
+            <h4 class="fw-bold text-gray-900 m-0">Planning Workbench</h4>
+            <p class="text-muted small m-0">Group orders, solve route proposals, and compare load/cost outcomes before approval</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-light border fw-semibold" style="border-radius: 6px;" @onclick="ViewModel.ClearSelection" disabled="@(ViewModel.SelectedOrderIds.Count == 0 || ViewModel.IsSolving)">
+                CLEAR
+            </button>
+            <button class="btn btn-primary fw-semibold px-4" style="border-radius: 6px;" @onclick="ViewModel.CreateRoutePlanAsync" disabled="@(ViewModel.SelectedOrderIds.Count == 0 || ViewModel.IsSolving)">
+                <i class="bi bi-cpu me-2"></i>@(ViewModel.IsSolving ? "SOLVING..." : "SOLVE ROUTE")
+            </button>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(ViewModel.ErrorMessage))
+    {
+        <div class="alert alert-danger py-2 px-3 small border-0 mb-4" style="border-radius: 6px;">
+            <i class="bi bi-exclamation-circle-fill me-2"></i>@ViewModel.ErrorMessage
+        </div>
+    }
+
+    <div class="row g-4 mb-4">
+        <div class="col-xl-8">
+            <div class="tms-card p-0 overflow-hidden">
+                <div class="planning-panel-header">
+                    <div>
+                        <h6 class="fw-bold m-0">Available Orders</h6>
+                        <span class="text-muted small">@ViewModel.SelectedOrderIds.Count selected, @ViewModel.SelectedWeightKg.ToString("N1") kg, @ViewModel.SelectedVolumeM3.ToString("N2") m3</span>
+                    </div>
+                </div>
+                @if (ViewModel.IsLoading)
+                {
+                    <div class="p-5 text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="text-muted mt-2 small">Loading planning orders...</p>
+                    </div>
+                }
+                else if (ViewModel.AvailableOrders.Count == 0)
+                {
+                    <div class="p-5 text-center">
+                        <i class="bi bi-inboxes fs-1 text-muted"></i>
+                        <h5 class="mt-3 fw-semibold text-gray-800">No Orders Ready</h5>
+                        <p class="text-muted small">New and active transport orders will appear here.</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="tms-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 48px;"></th>
+                                    <th>ORDER</th>
+                                    <th>ROUTE</th>
+                                    <th>WINDOW</th>
+                                    <th class="text-end">WEIGHT</th>
+                                    <th class="text-end">VOLUME</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var order in ViewModel.AvailableOrders)
+                                {
+                                    <tr>
+                                        <td>
+                                            <input class="form-check-input" type="checkbox"
+                                                   checked="@ViewModel.SelectedOrderIds.Contains(order.TransportOrderId)"
+                                                   @onchange="args => ViewModel.ToggleOrder(order.TransportOrderId, args.Value is bool selected && selected)" />
+                                        </td>
+                                        <td>
+                                            <div class="fw-semibold text-primary">@order.TransportOrderNo</div>
+                                            <span class="text-muted small">@order.Priority / @order.Status</span>
+                                        </td>
+                                        <td class="small">
+                                            <span class="fw-semibold">@order.PickupLocationName</span>
+                                            <i class="bi bi-arrow-right mx-1 text-muted"></i>
+                                            <span class="text-muted">@order.DeliveryLocationName</span>
+                                        </td>
+                                        <td class="small">
+                                            <div>@(order.RequestedPickupDate?.ToString("yyyy-MM-dd HH:mm") ?? "-")</div>
+                                            <span class="text-muted">to @(order.RequestedDeliveryDate?.ToString("yyyy-MM-dd HH:mm") ?? "-")</span>
+                                        </td>
+                                        <td class="text-end">@order.TotalWeightKg.ToString("N1") kg</td>
+                                        <td class="text-end">@order.TotalVolumeM3.ToString("N2") m3</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="col-xl-4">
+            <div class="tms-card planning-metric-stack">
+                <div class="planning-metric">
+                    <span>Open Proposals</span>
+                    <strong>@ViewModel.RoutePlans.Count(route => route.Status != "Approved")</strong>
+                </div>
+                <div class="planning-metric">
+                    <span>Best Cost</span>
+                    <strong>@(ViewModel.RoutePlans.Count == 0 ? "-" : ViewModel.RoutePlans.Min(route => route.EstimatedCost).ToString("N0"))</strong>
+                </div>
+                <div class="planning-metric">
+                    <span>Average Utilization</span>
+                    <strong>@(ViewModel.LoadPlans.Count == 0 ? "-" : ViewModel.LoadPlans.Average(load => (double)load.UtilizationPercent).ToString("N1") + "%")</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-xl-8">
+            <div class="tms-card p-0 overflow-hidden">
+                <div class="planning-panel-header">
+                    <h6 class="fw-bold m-0">Route Proposals</h6>
+                </div>
+                <div class="table-responsive">
+                    <table class="tms-table">
+                        <thead>
+                            <tr>
+                                <th>PLAN</th>
+                                <th>MODE</th>
+                                <th class="text-end">DISTANCE</th>
+                                <th class="text-end">COST</th>
+                                <th class="text-end">RISK</th>
+                                <th>STATUS</th>
+                                <th class="text-end">ACTIONS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var route in ViewModel.RoutePlans)
+                            {
+                                <tr>
+                                    <td class="fw-semibold text-primary" style="cursor: pointer;" @onclick="() => ViewModel.ViewRoute(route.RoutePlanId)">@route.RoutePlanNo</td>
+                                    <td>@route.TransportMode</td>
+                                    <td class="text-end">@route.TotalDistanceKm.ToString("N1") km</td>
+                                    <td class="text-end">@route.EstimatedCost.ToString("N0")</td>
+                                    <td class="text-end">@route.RiskScore.ToString("N1")</td>
+                                    <td><span class="tms-badge @ViewModel.GetStatusBadgeClass(route.Status)">@route.Status</span></td>
+                                    <td class="text-end">
+                                        <button class="btn btn-sm btn-light border-0 me-1" title="Create load plan" @onclick="() => ViewModel.CreateLoadPlanAsync(route)" disabled="@ViewModel.IsSolving">
+                                            <i class="bi bi-box-seam"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-light border-0" title="Open route" @onclick="() => ViewModel.ViewRoute(route.RoutePlanId)">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4">
+            <div class="tms-card p-0 overflow-hidden">
+                <div class="planning-panel-header">
+                    <h6 class="fw-bold m-0">Load Layouts</h6>
+                </div>
+                <div class="planning-load-list">
+                    @foreach (var load in ViewModel.LoadPlans)
+                    {
+                        <button type="button" class="planning-load-row" @onclick="() => ViewModel.ViewLoad(load.LoadPlanId)">
+                            <span>
+                                <strong>@load.LoadPlanNo</strong>
+                                <small>@load.VehicleType / @load.TotalWeightKg.ToString("N1") kg</small>
+                            </span>
+                            <span class="text-end">
+                                <strong>@load.UtilizationPercent.ToString("N1")%</strong>
+                                <small>@(load.LoadFeasible ? "Feasible" : "Review")</small>
+                            </span>
+                        </button>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await ViewModel.InitializeAsync();
+    }
+}

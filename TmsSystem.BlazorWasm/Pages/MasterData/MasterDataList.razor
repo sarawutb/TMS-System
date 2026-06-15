@@ -16,16 +16,6 @@
         </button>
     </div>
 
-    <div class="master-data-tabs mb-4">
-        @foreach (var definition in ViewModel.Definitions)
-        {
-            <NavLink class="master-data-tab" href="@($"master-data/{definition.Key}")">
-                <i class="@definition.IconCss"></i>
-                <span>@definition.Title</span>
-            </NavLink>
-        }
-    </div>
-
     <div class="tms-card mb-4" style="padding: 16px;">
         <div class="row g-3 align-items-center">
             <div class="col-lg-8 col-md-7 col-sm-12">
@@ -100,8 +90,7 @@
                                     <td>
                                         @if (field.FieldType == MasterDataFieldType.Checkbox)
                                         {
-                                            var label = ViewModel.GetDisplayValue(item, field);
-                                            <span class="tms-badge @(label == "Active" ? "tms-badge-success" : "bg-light text-secondary border")">@label</span>
+                                            <span class="tms-badge @ViewModel.GetBooleanBadgeClass(item, field)">@ViewModel.GetDisplayValue(item, field)</span>
                                         }
                                         else
                                         {

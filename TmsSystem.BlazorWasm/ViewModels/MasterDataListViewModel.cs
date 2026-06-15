@@ -76,6 +76,9 @@ public sealed class MasterDataListViewModel(MasterDataService masterDataService,
     public string GetPrimaryDisplayValue(object item)
         => GetRawValue(item, SelectedDefinition.PrimaryDisplayProperty)?.ToString() ?? SelectedDefinition.Title;
 
+    public string GetBooleanBadgeClass(object item, MasterDataFieldDefinition field)
+        => GetRawValue(item, field.Name) is bool value && value ? "tms-badge-success" : "bg-light text-secondary border";
+
     public long GetId(object item)
         => Convert.ToInt64(GetRawValue(item, SelectedDefinition.IdProperty));
 

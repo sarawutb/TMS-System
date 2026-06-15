@@ -219,10 +219,17 @@ public sealed class TmsDbContext(DbContextOptions<TmsDbContext> options) : DbCon
             entity.HasKey(x => x.RoutePlanId);
             entity.Property(x => x.RoutePlanNo).HasMaxLength(50).IsRequired();
             entity.Property(x => x.OptimizationEngine).HasMaxLength(100);
+            entity.Property(x => x.TransportMode).HasMaxLength(50);
+            entity.Property(x => x.VehicleType).HasMaxLength(50);
             entity.Property(x => x.TotalDistanceKm).HasPrecision(18, 2);
             entity.Property(x => x.EstimatedCost).HasPrecision(18, 2);
             entity.Property(x => x.RiskScore).HasPrecision(5, 2);
+            entity.Property(x => x.StopSequenceJson).HasColumnType("nvarchar(max)");
+            entity.Property(x => x.ComplianceIssuesJson).HasColumnType("nvarchar(max)");
+            entity.Property(x => x.SolverMetadataJson).HasColumnType("nvarchar(max)");
             entity.Property(x => x.Status).HasMaxLength(30).IsRequired();
+            entity.HasOne(x => x.Vehicle).WithMany().HasForeignKey(x => x.VehicleId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(x => x.Carrier).WithMany().HasForeignKey(x => x.CarrierId).OnDelete(DeleteBehavior.Restrict);
             entity.HasIndex(x => x.RoutePlanNo).HasDatabaseName("UX_trn_route_plan_RoutePlanNo").IsUnique();
         });
 
@@ -232,10 +239,20 @@ public sealed class TmsDbContext(DbContextOptions<TmsDbContext> options) : DbCon
             entity.HasKey(x => x.LoadPlanId);
             entity.Property(x => x.LoadPlanNo).HasMaxLength(50).IsRequired();
             entity.Property(x => x.VehicleType).HasMaxLength(50).IsRequired();
+            entity.Property(x => x.ContainerLengthM).HasPrecision(18, 3);
+            entity.Property(x => x.ContainerWidthM).HasPrecision(18, 3);
+            entity.Property(x => x.ContainerHeightM).HasPrecision(18, 3);
+            entity.Property(x => x.CapacityWeightKg).HasPrecision(18, 2);
+            entity.Property(x => x.CapacityVolumeM3).HasPrecision(18, 2);
             entity.Property(x => x.TotalWeightKg).HasPrecision(18, 2);
             entity.Property(x => x.TotalVolumeM3).HasPrecision(18, 2);
             entity.Property(x => x.UtilizationPercent).HasPrecision(5, 2);
             entity.Property(x => x.ThreeDPlanRef).HasMaxLength(500);
+            entity.Property(x => x.LoadPlanJson).HasColumnType("nvarchar(max)");
+            entity.Property(x => x.PlacementJson).HasColumnType("nvarchar(max)");
+            entity.Property(x => x.ConstraintIssuesJson).HasColumnType("nvarchar(max)");
+            entity.HasOne(x => x.RoutePlan).WithMany(x => x.LoadPlans).HasForeignKey(x => x.RoutePlanId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(x => x.Vehicle).WithMany().HasForeignKey(x => x.VehicleId).OnDelete(DeleteBehavior.Restrict);
             entity.HasIndex(x => x.LoadPlanNo).HasDatabaseName("UX_trn_load_plan_LoadPlanNo").IsUnique();
         });
 

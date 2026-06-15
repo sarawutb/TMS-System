@@ -26,6 +26,7 @@ builder.Services.AddScoped<AuthSessionService>();
 builder.Services.AddScoped<TransportOrderService>();
 builder.Services.AddScoped<ShipmentService>();
 builder.Services.AddScoped<MasterDataService>();
+builder.Services.AddScoped<PlanningService>();
 
 // ViewModels for MVVM refactoring
 builder.Services.AddTransient<LoginViewModel>();
@@ -36,6 +37,9 @@ builder.Services.AddTransient<ShipmentListViewModel>();
 builder.Services.AddTransient<ShipmentDetailViewModel>();
 builder.Services.AddTransient<MasterDataListViewModel>();
 builder.Services.AddTransient<MasterDataFormViewModel>();
+builder.Services.AddTransient<PlanningWorkbenchViewModel>();
+builder.Services.AddTransient<RoutePlanDetailViewModel>();
+builder.Services.AddTransient<LoadPlanDetailViewModel>();
 
 builder.Services.AddAuthorizationCore();
 builder.Services.AddBlazorBootstrap();

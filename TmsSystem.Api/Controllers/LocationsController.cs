@@ -11,7 +11,7 @@ public sealed class LocationsController(TmsDbContext dbContext) : CrudController
     [HttpGet("by-factory/{factoryId:long}")]
     public async Task<IActionResult> GetByFactory(long factoryId, CancellationToken cancellationToken)
     {
-        var locations = await dbContext.Locations
+        var locations = await Context.Locations
             .AsNoTracking()
             .Where(location => location.FactoryId == factoryId)
             .OrderBy(location => location.LocationName)
