@@ -10,4 +10,6 @@ public sealed class SubDistrict : AuditableEntity
     public string SubDistrictNameTh { get; set; } = string.Empty;
     public string? SubDistrictNameEn { get; set; }
     public string? PostalCode { get; set; }
+    public District? District { get; set; }
+    public ICollection<Location> Locations { get; set; } = new List<Location>();
 }

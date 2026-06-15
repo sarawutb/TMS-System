@@ -492,6 +492,58 @@ a:hover {
     background-color: #fafafa;
 }
 
+/* Master data setup */
+.master-data-tabs {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
+    gap: 8px;
+}
+
+.master-data-tab {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background-color: #ffffff;
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.master-data-tab:hover,
+.master-data-tab.active {
+    color: var(--primary-color);
+    border-color: rgba(24, 144, 255, 0.35);
+    background-color: var(--primary-bg);
+}
+
+.master-data-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary-color);
+    background-color: var(--primary-bg);
+    font-size: 1.2rem;
+}
+
+.master-data-form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 18px 20px;
+}
+
+.master-data-field-check {
+    min-height: 72px;
+    display: flex;
+    align-items: center;
+}
+
 /* Responsive side nav for mobile */
 @media (max-width: 768px) {
     .tms-sidebar {
@@ -501,5 +553,10 @@ a:hover {
     }
     .tms-sidebar.open {
         width: var(--sidebar-width);
+    }
+
+    .master-data-tabs,
+    .master-data-form-grid {
+        grid-template-columns: 1fr;
     }
 }

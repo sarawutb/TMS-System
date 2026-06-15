@@ -85,6 +85,7 @@ public sealed class TmsDbContext(DbContextOptions<TmsDbContext> options) : DbCon
             entity.Property(x => x.DistrictCode).HasMaxLength(50).IsRequired();
             entity.Property(x => x.DistrictNameTh).HasMaxLength(200).IsRequired();
             entity.Property(x => x.DistrictNameEn).HasMaxLength(200);
+            entity.HasOne(x => x.Province).WithMany(x => x.Districts).HasForeignKey(x => x.ProvinceId).OnDelete(DeleteBehavior.Restrict);
             entity.HasIndex(x => x.DistrictCode).HasDatabaseName("UX_mst_district_DistrictCode").IsUnique();
         });
 
@@ -96,6 +97,7 @@ public sealed class TmsDbContext(DbContextOptions<TmsDbContext> options) : DbCon
             entity.Property(x => x.SubDistrictNameTh).HasMaxLength(200).IsRequired();
             entity.Property(x => x.SubDistrictNameEn).HasMaxLength(200);
             entity.Property(x => x.PostalCode).HasMaxLength(20);
+            entity.HasOne(x => x.District).WithMany(x => x.SubDistricts).HasForeignKey(x => x.DistrictId).OnDelete(DeleteBehavior.Restrict);
             entity.HasIndex(x => x.SubDistrictCode).HasDatabaseName("UX_mst_subdistrict_SubDistrictCode").IsUnique();
         });
 
@@ -110,6 +112,10 @@ public sealed class TmsDbContext(DbContextOptions<TmsDbContext> options) : DbCon
             entity.Property(x => x.Latitude).HasPrecision(10, 7);
             entity.Property(x => x.Longitude).HasPrecision(10, 7);
             entity.Property(x => x.DockCode).HasMaxLength(50);
+            entity.HasOne(x => x.Factory).WithMany(x => x.Locations).HasForeignKey(x => x.FactoryId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(x => x.Province).WithMany(x => x.Locations).HasForeignKey(x => x.ProvinceId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(x => x.District).WithMany(x => x.Locations).HasForeignKey(x => x.DistrictId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(x => x.SubDistrict).WithMany(x => x.Locations).HasForeignKey(x => x.SubDistrictId).OnDelete(DeleteBehavior.Restrict);
             entity.HasIndex(x => x.LocationCode).HasDatabaseName("UX_mst_location_LocationCode").IsUnique();
         });
 
@@ -132,6 +138,7 @@ public sealed class TmsDbContext(DbContextOptions<TmsDbContext> options) : DbCon
             entity.Property(x => x.VehicleType).HasMaxLength(50).IsRequired();
             entity.Property(x => x.CapacityWeightKg).HasPrecision(18, 2);
             entity.Property(x => x.CapacityVolumeM3).HasPrecision(18, 2);
+            entity.HasOne(x => x.Carrier).WithMany(x => x.Vehicles).HasForeignKey(x => x.CarrierId).OnDelete(DeleteBehavior.Restrict);
             entity.HasIndex(x => x.VehicleNo).HasDatabaseName("UX_mst_vehicle_VehicleNo").IsUnique();
         });
 
@@ -143,6 +150,7 @@ public sealed class TmsDbContext(DbContextOptions<TmsDbContext> options) : DbCon
             entity.Property(x => x.DriverName).HasMaxLength(200).IsRequired();
             entity.Property(x => x.MobileNo).HasMaxLength(50);
             entity.Property(x => x.LicenseNo).HasMaxLength(100);
+            entity.HasOne(x => x.Carrier).WithMany(x => x.Drivers).HasForeignKey(x => x.CarrierId).OnDelete(DeleteBehavior.Restrict);
             entity.HasIndex(x => x.DriverCode).HasDatabaseName("UX_mst_driver_DriverCode").IsUnique();
         });
 

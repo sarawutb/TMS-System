@@ -1,0 +1,161 @@
+using Microsoft.AspNetCore.Components;
+using TmsSystem.Application.Common;
+using TmsSystem.BlazorWasm.Models;
+using TmsSystem.BlazorWasm.Services;
+using TmsSystem.Domain.Entities;
+
+namespace TmsSystem.BlazorWasm.ViewModels;
+
+public sealed class MasterDataListViewModel(MasterDataService masterDataService, NavigationManager navigationManager)
+{
+    public IReadOnlyList<MasterDataDefinition> Definitions => MasterDataDefinitions.All;
+    public MasterDataDefinition SelectedDefinition { get; private set; } = MasterDataDefinitions.Default;
+    public List<object> Items { get; private set; } = new();
+    public Dictionary<string, Dictionary<string, string>> LookupLabels { get; private set; } = new();
+    public string SearchQuery { get; set; } = string.Empty;
+    public string? ErrorMessage { get; private set; }
+    public bool IsLoading { get; private set; }
+    public bool ShowDeleteModal { get; private set; }
+    public long DeleteId { get; private set; }
+    public string DeleteDisplayName { get; private set; } = string.Empty;
+
+    public async Task InitializeAsync(string? entityKey)
+    {
+        SelectedDefinition = MasterDataDefinitions.Find(entityKey);
+        SearchQuery = string.Empty;
+        ErrorMessage = null;
+        await LoadAsync();
+    }
+
+    public async Task LoadAsync()
+    {
+        IsLoading = true;
+        ErrorMessage = null;
+        await LoadLookupLabelsAsync();
+
+        var result = await LoadItemsAsync(SelectedDefinition);
+        if (result.IsSuccess && result.Data is not null)
+        {
+            Items = result.Data;
+        }
+        else
+        {
+            Items = new();
+            ErrorMessage = result.Message;
+        }
+
+        IsLoading = false;
+    }
+
+    public IReadOnlyList<object> FilteredItems => Items
+        .Where(item => string.IsNullOrWhiteSpace(SearchQuery) || SelectedDefinition.ListFields.Any(field => GetDisplayValue(item, field).Contains(SearchQuery, StringComparison.OrdinalIgnoreCase)))
+        .ToList();
+
+    public string GetDisplayValue(object item, MasterDataFieldDefinition field)
+    {
+        var value = GetRawValue(item, field.Name);
+        if (value is null)
+        {
+            return "-";
+        }
+
+        if (!string.IsNullOrWhiteSpace(field.LookupKey) && LookupLabels.TryGetValue(field.LookupKey, out var labels) && labels.TryGetValue(value.ToString() ?? string.Empty, out var label))
+        {
+            return label;
+        }
+
+        return value switch
+        {
+            bool boolValue => boolValue ? "Active" : "Inactive",
+            decimal decimalValue => decimalValue.ToString("0.##"),
+            DateTime dateValue => dateValue.ToString("yyyy-MM-dd"),
+            _ => value.ToString() ?? "-"
+        };
+    }
+
+    public string GetPrimaryDisplayValue(object item)
+        => GetRawValue(item, SelectedDefinition.PrimaryDisplayProperty)?.ToString() ?? SelectedDefinition.Title;
+
+    public long GetId(object item)
+        => Convert.ToInt64(GetRawValue(item, SelectedDefinition.IdProperty));
+
+    public void CreateNew()
+        => navigationManager.NavigateTo($"master-data/{SelectedDefinition.Key}/new");
+
+    public void Edit(object item)
+        => navigationManager.NavigateTo($"master-data/{SelectedDefinition.Key}/{GetId(item)}/edit");
+
+    public void ConfirmDelete(object item)
+    {
+        DeleteId = GetId(item);
+        DeleteDisplayName = GetPrimaryDisplayValue(item);
+        ShowDeleteModal = true;
+    }
+
+    public void CloseDeleteModal()
+    {
+        ShowDeleteModal = false;
+    }
+
+    public async Task ExecuteDeleteAsync()
+    {
+        ShowDeleteModal = false;
+        var result = await masterDataService.DeleteAsync(SelectedDefinition.Endpoint, DeleteId);
+        if (result.IsSuccess)
+        {
+            Items.RemoveAll(item => GetId(item) == DeleteId);
+            ErrorMessage = null;
+        }
+        else
+        {
+            ErrorMessage = result.Message;
+        }
+    }
+
+    private async Task<OperationResult<List<object>>> LoadItemsAsync(MasterDataDefinition definition)
+        => definition.Key switch
+        {
+            "factories" => await LoadTypedItemsAsync<Factory>(definition.Endpoint, definition.Title),
+            "customers" => await LoadTypedItemsAsync<Customer>(definition.Endpoint, definition.Title),
+            "locations" => await LoadTypedItemsAsync<Location>(definition.Endpoint, definition.Title),
+            "carriers" => await LoadTypedItemsAsync<Carrier>(definition.Endpoint, definition.Title),
+            "vehicles" => await LoadTypedItemsAsync<Vehicle>(definition.Endpoint, definition.Title),
+            "drivers" => await LoadTypedItemsAsync<Driver>(definition.Endpoint, definition.Title),
+            "products" => await LoadTypedItemsAsync<Product>(definition.Endpoint, definition.Title),
+            "provinces" => await LoadTypedItemsAsync<Province>(definition.Endpoint, definition.Title),
+            "districts" => await LoadTypedItemsAsync<District>(definition.Endpoint, definition.Title),
+            "subdistricts" => await LoadTypedItemsAsync<SubDistrict>(definition.Endpoint, definition.Title),
+            _ => OperationResult<List<object>>.Failure("Unsupported master-data entity.")
+        };
+
+    private async Task<OperationResult<List<object>>> LoadTypedItemsAsync<T>(string endpoint, string label)
+    {
+        var result = await masterDataService.GetListAsync<T>(endpoint, label);
+        return result.IsSuccess && result.Data is not null
+            ? OperationResult<List<object>>.Success(result.Data.Cast<object>().ToList(), result.Message)
+            : OperationResult<List<object>>.Failure(result.Message);
+    }
+
+    private async Task LoadLookupLabelsAsync()
+    {
+        var labels = new Dictionary<string, Dictionary<string, string>>
+        {
+            ["factories"] = await BuildLookupAsync(masterDataService.GetFactoriesAsync(), factory => factory.FactoryId, factory => $"{factory.FactoryName} ({factory.FactoryCode})"),
+            ["carriers"] = await BuildLookupAsync(masterDataService.GetCarriersAsync(), carrier => carrier.CarrierId, carrier => $"{carrier.CarrierName} ({carrier.CarrierCode})"),
+            ["provinces"] = await BuildLookupAsync(masterDataService.GetProvincesAsync(), province => province.ProvinceId, province => province.ProvinceNameTh),
+            ["districts"] = await BuildLookupAsync(masterDataService.GetDistrictsAsync(), district => district.DistrictId, district => district.DistrictNameTh),
+            ["subdistricts"] = await BuildLookupAsync(masterDataService.GetSubDistrictsAsync(), subDistrict => subDistrict.SubDistrictId, subDistrict => subDistrict.SubDistrictNameTh)
+        };
+
+        LookupLabels = labels;
+    }
+
+    private static async Task<Dictionary<string, string>> BuildLookupAsync<T>(Task<OperationResult<List<T>>> source, Func<T, long> idSelector, Func<T, string> labelSelector)
+    {
+        var result = await source;
+        return result.Data?.ToDictionary(item => idSelector(item).ToString(), labelSelector) ?? new();
+    }
+
+    private static object? GetRawValue(object item, string propertyName)
+        => item.GetType().GetProperty(propertyName)?.GetValue(item);
+}

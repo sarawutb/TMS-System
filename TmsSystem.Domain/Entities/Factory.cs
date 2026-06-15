@@ -9,4 +9,5 @@ public sealed class Factory : AuditableEntity
     public string FactoryName { get; set; } = string.Empty;
     public string IndustryType { get; set; } = string.Empty;
     public string? TimeZone { get; set; }
+    public ICollection<Location> Locations { get; set; } = new List<Location>();
 }

@@ -11,4 +11,5 @@ public sealed class Vehicle : AuditableEntity
     public decimal? CapacityWeightKg { get; set; }
     public decimal? CapacityVolumeM3 { get; set; }
     public bool TemperatureControlled { get; set; }
+    public Carrier? Carrier { get; set; }
 }

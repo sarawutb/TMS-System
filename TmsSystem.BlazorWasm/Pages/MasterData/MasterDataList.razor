@@ -1,0 +1,157 @@
+@page "/master-data"
+@page "/master-data/{EntityKey}"
+@attribute [Authorize]
+@inject MasterDataListViewModel ViewModel
+
+<PageTitle>@ViewModel.SelectedDefinition.Title - Master Data</PageTitle>
+
+<div class="tms-content">
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+        <div>
+            <h4 class="fw-bold text-gray-900 m-0">Master Data Setup</h4>
+            <p class="text-muted small m-0">Maintain operational reference data used across planning, dispatch, and billing</p>
+        </div>
+        <button class="btn btn-primary fw-semibold px-4" style="border-radius: 6px;" @onclick="ViewModel.CreateNew">
+            <i class="bi bi-plus-lg me-2"></i>NEW @ViewModel.SelectedDefinition.Title.TrimEnd('S').ToUpperInvariant()
+        </button>
+    </div>
+
+    <div class="master-data-tabs mb-4">
+        @foreach (var definition in ViewModel.Definitions)
+        {
+            <NavLink class="master-data-tab" href="@($"master-data/{definition.Key}")">
+                <i class="@definition.IconCss"></i>
+                <span>@definition.Title</span>
+            </NavLink>
+        }
+    </div>
+
+    <div class="tms-card mb-4" style="padding: 16px;">
+        <div class="row g-3 align-items-center">
+            <div class="col-lg-8 col-md-7 col-sm-12">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="master-data-icon">
+                        <i class="@ViewModel.SelectedDefinition.IconCss"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold m-0">@ViewModel.SelectedDefinition.Title</h5>
+                        <p class="text-muted small m-0">@ViewModel.SelectedDefinition.Description</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-5 col-sm-12">
+                <div class="position-relative">
+                    <input type="text"
+                           class="form-control form-control-sm ps-5"
+                           style="border-radius: 6px; height: 38px;"
+                           placeholder="Search records..."
+                           @bind="ViewModel.SearchQuery"
+                           @bind:event="oninput" />
+                    <i class="bi bi-search position-absolute text-muted" style="left: 16px; top: 50%; transform: translateY(-50%);"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(ViewModel.ErrorMessage))
+    {
+        <div class="alert alert-danger py-2 px-3 small border-0 mb-4" style="border-radius: 6px;">
+            <i class="bi bi-exclamation-circle-fill me-2"></i>@ViewModel.ErrorMessage
+        </div>
+    }
+
+    <div class="tms-card p-0 overflow-hidden">
+        @if (ViewModel.IsLoading)
+        {
+            <div class="p-5 text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="text-muted mt-2 small">Loading @ViewModel.SelectedDefinition.Title.ToLowerInvariant()...</p>
+            </div>
+        }
+        else if (ViewModel.FilteredItems.Count == 0)
+        {
+            <div class="p-5 text-center">
+                <i class="@($"{ViewModel.SelectedDefinition.IconCss} fs-1 text-muted")"></i>
+                <h5 class="mt-3 fw-semibold text-gray-800">No Records Found</h5>
+                <p class="text-muted small">Create the first record or adjust your search.</p>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="tms-table">
+                    <thead>
+                        <tr>
+                            @foreach (var field in ViewModel.SelectedDefinition.ListFields)
+                            {
+                                <th>@field.Label.ToUpperInvariant()</th>
+                            }
+                            <th class="text-end">ACTIONS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in ViewModel.FilteredItems)
+                        {
+                            <tr>
+                                @foreach (var field in ViewModel.SelectedDefinition.ListFields)
+                                {
+                                    <td>
+                                        @if (field.FieldType == MasterDataFieldType.Checkbox)
+                                        {
+                                            var label = ViewModel.GetDisplayValue(item, field);
+                                            <span class="tms-badge @(label == "Active" ? "tms-badge-success" : "bg-light text-secondary border")">@label</span>
+                                        }
+                                        else
+                                        {
+                                            <span>@ViewModel.GetDisplayValue(item, field)</span>
+                                        }
+                                    </td>
+                                }
+                                <td class="text-end">
+                                    <button class="btn btn-sm btn-light border-0 me-1" title="Edit" @onclick="() => ViewModel.Edit(item)">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-light-danger border-0" title="Delete" @onclick="() => ViewModel.ConfirmDelete(item)">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+@if (ViewModel.ShowDeleteModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow" style="border-radius: 8px;">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold text-danger">Delete @ViewModel.SelectedDefinition.Title.TrimEnd('s')</h5>
+                    <button type="button" class="btn-close" @onclick="ViewModel.CloseDeleteModal"></button>
+                </div>
+                <div class="modal-body py-3">
+                    <p class="m-0">Delete <strong class="text-primary">@ViewModel.DeleteDisplayName</strong>? This action cannot be undone.</p>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light fw-semibold" style="border-radius: 6px;" @onclick="ViewModel.CloseDeleteModal">Cancel</button>
+                    <button type="button" class="btn btn-danger fw-semibold" style="border-radius: 6px;" @onclick="ViewModel.ExecuteDeleteAsync">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public string? EntityKey { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await ViewModel.InitializeAsync(EntityKey);
+    }
+}

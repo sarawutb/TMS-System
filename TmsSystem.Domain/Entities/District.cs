@@ -9,4 +9,7 @@ public sealed class District : AuditableEntity
     public string DistrictCode { get; set; } = string.Empty;
     public string DistrictNameTh { get; set; } = string.Empty;
     public string? DistrictNameEn { get; set; }
+    public Province? Province { get; set; }
+    public ICollection<SubDistrict> SubDistricts { get; set; } = new List<SubDistrict>();
+    public ICollection<Location> Locations { get; set; } = new List<Location>();
 }

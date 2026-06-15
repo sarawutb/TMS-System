@@ -25,6 +25,7 @@ builder.Services.AddScoped(sp =>
 builder.Services.AddScoped<AuthSessionService>();
 builder.Services.AddScoped<TransportOrderService>();
 builder.Services.AddScoped<ShipmentService>();
+builder.Services.AddScoped<MasterDataService>();
 
 // ViewModels for MVVM refactoring
 builder.Services.AddTransient<LoginViewModel>();
@@ -33,6 +34,8 @@ builder.Services.AddTransient<OrderDetailViewModel>();
 builder.Services.AddTransient<OrderFormViewModel>();
 builder.Services.AddTransient<ShipmentListViewModel>();
 builder.Services.AddTransient<ShipmentDetailViewModel>();
+builder.Services.AddTransient<MasterDataListViewModel>();
+builder.Services.AddTransient<MasterDataFormViewModel>();
 
 builder.Services.AddAuthorizationCore();
 builder.Services.AddBlazorBootstrap();

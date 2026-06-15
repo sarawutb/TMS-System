@@ -10,4 +10,5 @@ public sealed class Driver : AuditableEntity
     public long? CarrierId { get; set; }
     public string? MobileNo { get; set; }
     public string? LicenseNo { get; set; }
+    public Carrier? Carrier { get; set; }
 }

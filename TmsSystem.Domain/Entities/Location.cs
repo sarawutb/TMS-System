@@ -16,4 +16,8 @@ public sealed class Location : AuditableEntity
     public decimal? Latitude { get; set; }
     public decimal? Longitude { get; set; }
     public string? DockCode { get; set; }
+    public Factory? Factory { get; set; }
+    public Province? Province { get; set; }
+    public District? District { get; set; }
+    public SubDistrict? SubDistrict { get; set; }
 }
