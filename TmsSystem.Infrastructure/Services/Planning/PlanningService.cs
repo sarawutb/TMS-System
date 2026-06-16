@@ -26,7 +26,7 @@ public sealed class PlanningService(TmsDbContext dbContext, IOptimizationSolverS
             .AsNoTracking()
             .Where(order => order.IsActive && order.Status != "Completed" && order.Status != "Cancelled")
             .OrderBy(order => order.RequestedPickupDate ?? DateTime.MaxValue)
-            .ThenByDescending(order => order.Priority);
+            .ThenBy(order => order.Priority == "High" ? 0 : order.Priority == "Medium" ? 1 : order.Priority == "Low" ? 2 : 3);
 
         var totalOrders = await ordersQuery.CountAsync(cancellationToken);
         var orders = await ordersQuery

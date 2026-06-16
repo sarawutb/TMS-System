@@ -1,0 +1,106 @@
+@page "/fleet"
+@attribute [Authorize]
+@inject FleetDashboardViewModel ViewModel
+
+<PageTitle>Fleet & Drivers - TMS Control Room</PageTitle>
+
+<div class="tms-content">
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+        <div>
+            <h4 class="fw-bold text-gray-900 m-0">Fleet & Drivers</h4>
+            <p class="text-muted small m-0">Vehicle utilization, maintenance due dates, fuel efficiency, and safety indicators</p>
+        </div>
+        <button class="btn btn-light border fw-semibold" style="border-radius: 6px;" @onclick="ViewModel.InitializeAsync">
+            <i class="bi bi-arrow-clockwise me-2"></i>REFRESH
+        </button>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(ViewModel.ErrorMessage))
+    {
+        <div class="alert alert-danger py-2 px-3 small border-0 mb-4" style="border-radius: 6px;">
+            <i class="bi bi-exclamation-circle-fill me-2"></i>@ViewModel.ErrorMessage
+        </div>
+    }
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="tms-card planning-summary-tile">
+                <span>Average Utilization</span>
+                <strong>@ViewModel.AverageUtilization.ToString("N1")%</strong>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="tms-card planning-summary-tile">
+                <span>Maintenance Due</span>
+                <strong>@ViewModel.DueMaintenanceCount</strong>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="tms-card planning-summary-tile">
+                <span>Safety Events</span>
+                <strong>@ViewModel.SafetyEventCount</strong>
+            </div>
+        </div>
+    </div>
+
+    <div class="tms-card p-0 overflow-hidden">
+        @if (ViewModel.IsLoading)
+        {
+            <div class="p-5 text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        }
+        else if (ViewModel.Summary.Vehicles.Count == 0)
+        {
+            <div class="p-5 text-center">
+                <i class="bi bi-car-front fs-1 text-muted"></i>
+                <p class="text-muted mt-2 small">No active fleet vehicles found.</p>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="tms-table">
+                    <thead>
+                        <tr>
+                            <th>VEHICLE</th>
+                            <th class="text-end">SHIPMENTS</th>
+                            <th class="text-end">UTILIZATION</th>
+                            <th>MAINTENANCE</th>
+                            <th class="text-end">KM/L</th>
+                            <th class="text-end">SAFETY</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var vehicle in ViewModel.Summary.Vehicles)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="fw-semibold text-primary">@vehicle.VehicleNo</div>
+                                    <span class="text-muted small">@vehicle.VehicleType</span>
+                                </td>
+                                <td class="text-end">@vehicle.ShipmentCount30Days</td>
+                                <td class="text-end">@vehicle.UtilizationPercent.ToString("N1")%</td>
+                                <td>
+                                    <div>@(vehicle.NextMaintenanceDate?.ToString("yyyy-MM-dd") ?? "-")</div>
+                                    <span class="text-muted small">@vehicle.MaintenanceStatus</span>
+                                </td>
+                                <td class="text-end">@(vehicle.FuelEfficiencyKmPerLiter?.ToString("N2") ?? "-")</td>
+                                <td class="text-end">@vehicle.SafetyEventCount30Days</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await ViewModel.InitializeAsync();
+    }
+}

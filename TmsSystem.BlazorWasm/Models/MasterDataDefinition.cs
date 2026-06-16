@@ -5,6 +5,7 @@ namespace TmsSystem.BlazorWasm.Models;
 public enum MasterDataFieldType
 {
     Text,
+    Date,
     Decimal,
     Checkbox,
     Select,
@@ -212,6 +213,115 @@ public static class MasterDataDefinitions
                 Field(nameof(Driver.MobileNo), "Mobile No"),
                 Field(nameof(Driver.LicenseNo), "License No"),
                 Field(nameof(Driver.IsActive), "Active", MasterDataFieldType.Checkbox)
+            ]),
+        new(
+            "vehicle-maintenance",
+            "Maintenance",
+            "Vehicle maintenance schedule and completion tracking",
+            "bi bi-tools",
+            "api/vehicle-maintenance",
+            typeof(VehicleMaintenance),
+            nameof(VehicleMaintenance.VehicleMaintenanceId),
+            nameof(VehicleMaintenance.MaintenanceType),
+            [
+                Field(nameof(VehicleMaintenance.VehicleId), "Vehicle", MasterDataFieldType.Select, lookupKey: "vehicles"),
+                Field(nameof(VehicleMaintenance.MaintenanceType), "Type"),
+                Field(nameof(VehicleMaintenance.ScheduleDate), "Schedule", MasterDataFieldType.Date),
+                Field(nameof(VehicleMaintenance.MaintenanceStatus), "Status"),
+                Field(nameof(VehicleMaintenance.IsActive), "Active", MasterDataFieldType.Checkbox)
+            ],
+            [
+                Field(nameof(VehicleMaintenance.VehicleId), "Vehicle", MasterDataFieldType.Select, required: true, lookupKey: "vehicles"),
+                Field(nameof(VehicleMaintenance.MaintenanceType), "Maintenance Type", MasterDataFieldType.Select, required: true, staticOptions: Options("PM", "Repair", "Inspection", "Tire", "Other")),
+                Field(nameof(VehicleMaintenance.ScheduleDate), "Schedule Date", MasterDataFieldType.Date, required: true),
+                Field(nameof(VehicleMaintenance.CompleteDate), "Complete Date", MasterDataFieldType.Date),
+                Field(nameof(VehicleMaintenance.OdometerKm), "Odometer (km)", MasterDataFieldType.Decimal),
+                Field(nameof(VehicleMaintenance.MaintenanceStatus), "Status", MasterDataFieldType.Select, required: true, staticOptions: Options("Scheduled", "In Progress", "Completed", "Cancelled")),
+                Field(nameof(VehicleMaintenance.Remark), "Remark", MasterDataFieldType.Textarea),
+                Field(nameof(VehicleMaintenance.IsActive), "Active", MasterDataFieldType.Checkbox)
+            ]),
+        new(
+            "fuel-transactions",
+            "Fuel Transactions",
+            "Fuel cost, liter, odometer, and driver records",
+            "bi bi-fuel-pump",
+            "api/fuel-transaction",
+            typeof(FuelTransaction),
+            nameof(FuelTransaction.FuelTransactionId),
+            nameof(FuelTransaction.StationName),
+            [
+                Field(nameof(FuelTransaction.FuelDate), "Date", MasterDataFieldType.Date),
+                Field(nameof(FuelTransaction.VehicleId), "Vehicle", MasterDataFieldType.Select, lookupKey: "vehicles"),
+                Field(nameof(FuelTransaction.DriverId), "Driver", MasterDataFieldType.Select, lookupKey: "drivers"),
+                Field(nameof(FuelTransaction.FuelLiter), "Liter", MasterDataFieldType.Decimal),
+                Field(nameof(FuelTransaction.FuelCost), "Cost", MasterDataFieldType.Decimal)
+            ],
+            [
+                Field(nameof(FuelTransaction.VehicleId), "Vehicle", MasterDataFieldType.Select, required: true, lookupKey: "vehicles"),
+                Field(nameof(FuelTransaction.DriverId), "Driver", MasterDataFieldType.Select, lookupKey: "drivers"),
+                Field(nameof(FuelTransaction.ShipmentId), "Shipment ID", MasterDataFieldType.Decimal),
+                Field(nameof(FuelTransaction.FuelDate), "Fuel Date", MasterDataFieldType.Date, required: true),
+                Field(nameof(FuelTransaction.FuelLiter), "Fuel Liter", MasterDataFieldType.Decimal, required: true),
+                Field(nameof(FuelTransaction.FuelCost), "Fuel Cost", MasterDataFieldType.Decimal, required: true),
+                Field(nameof(FuelTransaction.OdometerKm), "Odometer (km)", MasterDataFieldType.Decimal),
+                Field(nameof(FuelTransaction.StationName), "Station Name")
+            ]),
+        new(
+            "driver-performance",
+            "Driver Performance",
+            "Monthly driver KPI scoring",
+            "bi bi-award",
+            "api/driver-performance",
+            typeof(DriverPerformance),
+            nameof(DriverPerformance.DriverPerformanceId),
+            nameof(DriverPerformance.PeriodMonth),
+            [
+                Field(nameof(DriverPerformance.DriverId), "Driver", MasterDataFieldType.Select, lookupKey: "drivers"),
+                Field(nameof(DriverPerformance.PeriodMonth), "Period"),
+                Field(nameof(DriverPerformance.OnTimeScore), "On Time", MasterDataFieldType.Decimal),
+                Field(nameof(DriverPerformance.SafetyScore), "Safety", MasterDataFieldType.Decimal),
+                Field(nameof(DriverPerformance.OverallScore), "Overall", MasterDataFieldType.Decimal)
+            ],
+            [
+                Field(nameof(DriverPerformance.DriverId), "Driver", MasterDataFieldType.Select, required: true, lookupKey: "drivers"),
+                Field(nameof(DriverPerformance.PeriodMonth), "Period Month", required: true),
+                Field(nameof(DriverPerformance.OnTimeScore), "On-Time Score", MasterDataFieldType.Decimal),
+                Field(nameof(DriverPerformance.SafetyScore), "Safety Score", MasterDataFieldType.Decimal),
+                Field(nameof(DriverPerformance.FuelEfficiencyScore), "Fuel Efficiency Score", MasterDataFieldType.Decimal),
+                Field(nameof(DriverPerformance.PodAccuracyScore), "POD Accuracy Score", MasterDataFieldType.Decimal),
+                Field(nameof(DriverPerformance.OverallScore), "Overall Score", MasterDataFieldType.Decimal),
+                Field(nameof(DriverPerformance.IsActive), "Active", MasterDataFieldType.Checkbox)
+            ]),
+        new(
+            "safety-events",
+            "Safety Events",
+            "Telematics, MDVR, and manual safety events linked to shipments and drivers",
+            "bi bi-shield-exclamation",
+            "api/tracking-event",
+            typeof(TrackingEvent),
+            nameof(TrackingEvent.TrackingEventId),
+            nameof(TrackingEvent.EventName),
+            [
+                Field(nameof(TrackingEvent.EventDate), "Date", MasterDataFieldType.Date),
+                Field(nameof(TrackingEvent.ShipmentId), "Shipment ID", MasterDataFieldType.Decimal),
+                Field(nameof(TrackingEvent.DriverId), "Driver", MasterDataFieldType.Select, lookupKey: "drivers"),
+                Field(nameof(TrackingEvent.SourceType), "Source"),
+                Field(nameof(TrackingEvent.SafetyEventType), "Safety Type")
+            ],
+            [
+                Field(nameof(TrackingEvent.ShipmentId), "Shipment ID", MasterDataFieldType.Decimal, required: true),
+                Field(nameof(TrackingEvent.DriverId), "Driver", MasterDataFieldType.Select, lookupKey: "drivers"),
+                Field(nameof(TrackingEvent.VehicleId), "Vehicle", MasterDataFieldType.Select, lookupKey: "vehicles"),
+                Field(nameof(TrackingEvent.EventCode), "Event Code", required: true),
+                Field(nameof(TrackingEvent.EventName), "Event Name", required: true),
+                Field(nameof(TrackingEvent.EventDate), "Event Date", MasterDataFieldType.Date, required: true),
+                Field(nameof(TrackingEvent.SourceType), "Source Type", MasterDataFieldType.Select, required: true, staticOptions: Options("Telematics", "MDVR", "Driver App", "Manual", "API")),
+                Field(nameof(TrackingEvent.SafetyEventType), "Safety Event Type", MasterDataFieldType.Select, staticOptions: Options("Harsh Brake", "Speeding", "Fatigue", "Lane Departure", "Collision", "Temperature Alert", "Other")),
+                Field(nameof(TrackingEvent.ExternalEventRef), "External Event Ref"),
+                Field(nameof(TrackingEvent.Latitude), "Latitude", MasterDataFieldType.Decimal),
+                Field(nameof(TrackingEvent.Longitude), "Longitude", MasterDataFieldType.Decimal),
+                Field(nameof(TrackingEvent.Remark), "Remark", MasterDataFieldType.Textarea),
+                Field(nameof(TrackingEvent.IsActive), "Active", MasterDataFieldType.Checkbox)
             ]),
         new(
             "products",

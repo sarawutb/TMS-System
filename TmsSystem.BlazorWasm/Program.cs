@@ -30,6 +30,7 @@ public static class Program
         builder.Services.AddScoped<ShipmentService>();
         builder.Services.AddScoped<MasterDataService>();
         builder.Services.AddScoped<PlanningService>();
+        builder.Services.AddScoped<FleetService>();
         builder.Services.AddSingleton<LoadingService>();
 
         // ViewModels for MVVM refactoring
@@ -44,6 +45,7 @@ public static class Program
         builder.Services.AddTransient<PlanningWorkbenchViewModel>();
         builder.Services.AddTransient<RoutePlanDetailViewModel>();
         builder.Services.AddTransient<LoadPlanDetailViewModel>();
+        builder.Services.AddTransient<FleetDashboardViewModel>();
 
         builder.Services.AddAuthorizationCore();
         builder.Services.AddBlazorBootstrap();

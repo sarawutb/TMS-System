@@ -68,6 +68,7 @@ public sealed class MasterDataFormViewModel(MasterDataService masterDataService,
         return value switch
         {
             null => string.Empty,
+            DateTime dateValue => dateValue == default ? string.Empty : dateValue.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
             decimal decimalValue => decimalValue.ToString("0.##", CultureInfo.InvariantCulture),
             bool boolValue => boolValue ? "true" : "false",
             _ => value.ToString() ?? string.Empty
@@ -91,13 +92,15 @@ public sealed class MasterDataFormViewModel(MasterDataService masterDataService,
         {
             convertedValue = targetType == typeof(string)
                 ? value
-                : targetType == typeof(decimal)
-                    ? decimal.Parse(value, CultureInfo.InvariantCulture)
-                    : targetType == typeof(long)
-                        ? long.Parse(value, CultureInfo.InvariantCulture)
-                        : targetType == typeof(bool)
-                            ? bool.Parse(value)
-                            : Convert.ChangeType(value, targetType, CultureInfo.InvariantCulture);
+                : targetType == typeof(DateTime)
+                    ? DateTime.Parse(value, CultureInfo.InvariantCulture)
+                    : targetType == typeof(decimal)
+                        ? decimal.Parse(value, CultureInfo.InvariantCulture)
+                        : targetType == typeof(long)
+                            ? long.Parse(value, CultureInfo.InvariantCulture)
+                            : targetType == typeof(bool)
+                                ? bool.Parse(value)
+                                : Convert.ChangeType(value, targetType, CultureInfo.InvariantCulture);
         }
         else if (targetType == typeof(string))
         {
@@ -146,7 +149,7 @@ public sealed class MasterDataFormViewModel(MasterDataService masterDataService,
         foreach (var field in SelectedDefinition.FormFields.Where(field => field.Required))
         {
             var value = GetRawValue(field.Name);
-            if (value is null || string.IsNullOrWhiteSpace(value.ToString()) || value is long longValue && longValue == 0)
+            if (value is null || string.IsNullOrWhiteSpace(value.ToString()) || value is long longValue && longValue == 0 || value is DateTime dateValue && dateValue == default)
             {
                 return $"{field.Label} is required.";
             }
@@ -168,6 +171,8 @@ public sealed class MasterDataFormViewModel(MasterDataService masterDataService,
     {
         lookupOptions["factories"] = await BuildOptionsAsync(masterDataService.GetFactoriesAsync(), factory => factory.FactoryId, factory => $"{factory.FactoryName} ({factory.FactoryCode})");
         lookupOptions["carriers"] = await BuildOptionsAsync(masterDataService.GetCarriersAsync(), carrier => carrier.CarrierId, carrier => $"{carrier.CarrierName} ({carrier.CarrierCode})");
+        lookupOptions["vehicles"] = await BuildOptionsAsync(masterDataService.GetVehiclesAsync(), vehicle => vehicle.VehicleId, vehicle => vehicle.VehicleNo);
+        lookupOptions["drivers"] = await BuildOptionsAsync(masterDataService.GetDriversAsync(), driver => driver.DriverId, driver => $"{driver.DriverName} ({driver.DriverCode})");
         lookupOptions["provinces"] = await BuildOptionsAsync(masterDataService.GetProvincesAsync(), province => province.ProvinceId, province => province.ProvinceNameTh);
         lookupOptions["districts"] = await BuildOptionsAsync(masterDataService.GetDistrictsAsync(), district => district.DistrictId, district => district.DistrictNameTh);
         lookupOptions["subdistricts"] = await BuildOptionsAsync(masterDataService.GetSubDistrictsAsync(), subDistrict => subDistrict.SubDistrictId, subDistrict => subDistrict.SubDistrictNameTh);
@@ -231,6 +236,10 @@ public sealed class MasterDataFormViewModel(MasterDataService masterDataService,
             "carriers" => await LoadTypedRecordAsync<Carrier>(definition.Endpoint, id),
             "vehicles" => await LoadTypedRecordAsync<Vehicle>(definition.Endpoint, id),
             "drivers" => await LoadTypedRecordAsync<Driver>(definition.Endpoint, id),
+            "vehicle-maintenance" => await LoadTypedRecordAsync<VehicleMaintenance>(definition.Endpoint, id),
+            "fuel-transactions" => await LoadTypedRecordAsync<FuelTransaction>(definition.Endpoint, id),
+            "driver-performance" => await LoadTypedRecordAsync<DriverPerformance>(definition.Endpoint, id),
+            "safety-events" => await LoadTypedRecordAsync<TrackingEvent>(definition.Endpoint, id),
             "products" => await LoadTypedRecordAsync<Product>(definition.Endpoint, id),
             "provinces" => await LoadTypedRecordAsync<Province>(definition.Endpoint, id),
             "districts" => await LoadTypedRecordAsync<District>(definition.Endpoint, id),
@@ -247,6 +256,10 @@ public sealed class MasterDataFormViewModel(MasterDataService masterDataService,
             "carriers" => await CreateTypedRecordAsync<Carrier>(definition.Endpoint),
             "vehicles" => await CreateTypedRecordAsync<Vehicle>(definition.Endpoint),
             "drivers" => await CreateTypedRecordAsync<Driver>(definition.Endpoint),
+            "vehicle-maintenance" => await CreateTypedRecordAsync<VehicleMaintenance>(definition.Endpoint),
+            "fuel-transactions" => await CreateTypedRecordAsync<FuelTransaction>(definition.Endpoint),
+            "driver-performance" => await CreateTypedRecordAsync<DriverPerformance>(definition.Endpoint),
+            "safety-events" => await CreateTypedRecordAsync<TrackingEvent>(definition.Endpoint),
             "products" => await CreateTypedRecordAsync<Product>(definition.Endpoint),
             "provinces" => await CreateTypedRecordAsync<Province>(definition.Endpoint),
             "districts" => await CreateTypedRecordAsync<District>(definition.Endpoint),
@@ -263,6 +276,10 @@ public sealed class MasterDataFormViewModel(MasterDataService masterDataService,
             "carriers" => await UpdateTypedRecordAsync<Carrier>(definition.Endpoint, id),
             "vehicles" => await UpdateTypedRecordAsync<Vehicle>(definition.Endpoint, id),
             "drivers" => await UpdateTypedRecordAsync<Driver>(definition.Endpoint, id),
+            "vehicle-maintenance" => await UpdateTypedRecordAsync<VehicleMaintenance>(definition.Endpoint, id),
+            "fuel-transactions" => await UpdateTypedRecordAsync<FuelTransaction>(definition.Endpoint, id),
+            "driver-performance" => await UpdateTypedRecordAsync<DriverPerformance>(definition.Endpoint, id),
+            "safety-events" => await UpdateTypedRecordAsync<TrackingEvent>(definition.Endpoint, id),
             "products" => await UpdateTypedRecordAsync<Product>(definition.Endpoint, id),
             "provinces" => await UpdateTypedRecordAsync<Province>(definition.Endpoint, id),
             "districts" => await UpdateTypedRecordAsync<District>(definition.Endpoint, id),

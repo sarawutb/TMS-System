@@ -312,7 +312,14 @@ public sealed class TmsDbContext(DbContextOptions<TmsDbContext> options) : DbCon
             entity.Property(x => x.Latitude).HasPrecision(10, 7);
             entity.Property(x => x.Longitude).HasPrecision(10, 7);
             entity.Property(x => x.SourceType).HasMaxLength(50).IsRequired();
+            entity.Property(x => x.SafetyEventType).HasMaxLength(50);
+            entity.Property(x => x.ExternalEventRef).HasMaxLength(100);
             entity.Property(x => x.Remark).HasMaxLength(500);
+            entity.HasOne<Shipment>().WithMany().HasForeignKey(x => x.ShipmentId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<Driver>().WithMany().HasForeignKey(x => x.DriverId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<Vehicle>().WithMany().HasForeignKey(x => x.VehicleId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasIndex(x => x.ShipmentId).HasDatabaseName("IX_trn_tracking_event_ShipmentId");
+            entity.HasIndex(x => x.DriverId).HasDatabaseName("IX_trn_tracking_event_DriverId");
         });
 
         modelBuilder.Entity<Epod>(entity =>

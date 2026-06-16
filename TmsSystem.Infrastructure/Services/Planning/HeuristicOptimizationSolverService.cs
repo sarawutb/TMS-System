@@ -24,7 +24,7 @@ public sealed class HeuristicOptimizationSolverService(TmsDbContext dbContext) :
             .AsNoTracking()
             .Where(order => orderIds.Contains(order.TransportOrderId))
             .OrderBy(order => order.RequestedPickupDate ?? DateTime.MaxValue)
-            .ThenBy(order => order.Priority)
+            .ThenBy(order => order.Priority == "High" ? 0 : order.Priority == "Medium" ? 1 : order.Priority == "Low" ? 2 : 3)
             .ToListAsync(cancellationToken);
 
         if (orders.Count != orderIds.Length)

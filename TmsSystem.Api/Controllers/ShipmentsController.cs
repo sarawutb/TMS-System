@@ -50,6 +50,8 @@ public sealed class ShipmentsController(TmsDbContext dbContext) : CrudController
         var trackingEvent = new TrackingEvent
         {
             ShipmentId = shipment.ShipmentId,
+            DriverId = shipment.DriverId,
+            VehicleId = shipment.VehicleId,
             EventCode = ToEventCode(reqStatus),
             EventName = $"Shipment status changed to {reqStatus}",
             EventDate = request.EventDate ?? DateTime.UtcNow,
