@@ -1,3 +1,5 @@
+using TmsSystem.Application.Common;
+
 namespace TmsSystem.Application.Dtos.Planning;
 
 public sealed record PlanningWorkbenchDto
@@ -5,6 +7,8 @@ public sealed record PlanningWorkbenchDto
     public IReadOnlyList<PlanningOrderDto> AvailableOrders { get; init; } = Array.Empty<PlanningOrderDto>();
     public IReadOnlyList<RoutePlanSummaryDto> RoutePlans { get; init; } = Array.Empty<RoutePlanSummaryDto>();
     public IReadOnlyList<LoadPlanSummaryDto> LoadPlans { get; init; } = Array.Empty<LoadPlanSummaryDto>();
+    public PagedResult<PlanningOrderDto> AvailableOrdersPage { get; init; } = PagedResult<PlanningOrderDto>.Empty();
+    public PagedResult<RoutePlanSummaryDto> RoutePlansPage { get; init; } = PagedResult<RoutePlanSummaryDto>.Empty();
 }
 
 public sealed record PlanningOrderDto
@@ -51,6 +55,7 @@ public sealed record RoutePlanSummaryDto
     public DateTime? EarliestPickupWindow { get; init; }
     public DateTime? LatestDeliveryWindow { get; init; }
     public IReadOnlyList<RouteStopDto> Stops { get; init; } = Array.Empty<RouteStopDto>();
+    public PagedResult<RouteStopDto> StopsPage { get; init; } = PagedResult<RouteStopDto>.Empty();
     public IReadOnlyList<string> ComplianceIssues { get; init; } = Array.Empty<string>();
 };
 
@@ -95,6 +100,7 @@ public sealed record LoadPlanSummaryDto
     public bool LoadFeasible { get; init; }
     public ContainerDimensionDto Container { get; init; } = new();
     public IReadOnlyList<CargoPlacementDto> Placements { get; init; } = Array.Empty<CargoPlacementDto>();
+    public PagedResult<CargoPlacementDto> PlacementsPage { get; init; } = PagedResult<CargoPlacementDto>.Empty();
     public IReadOnlyList<string> ConstraintIssues { get; init; } = Array.Empty<string>();
 };
 

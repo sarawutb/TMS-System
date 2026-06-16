@@ -95,7 +95,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach (var placement in ViewModel.LoadPlan.Placements)
+                                @foreach (var placement in ViewModel.PagedPlacements)
                                 {
                                     <tr>
                                         <td class="fw-semibold text-primary">@placement.TransportOrderNo</td>
@@ -109,6 +109,7 @@
                             </tbody>
                         </table>
                     </div>
+                    <TablePagination State="ViewModel.PlacementsPagination" PageChanged="() => ViewModel.LoadPageAsync()" />
                 </div>
             </div>
         </div>
@@ -122,4 +123,5 @@
     {
         await ViewModel.InitializeAsync(LoadPlanId);
     }
+
 }

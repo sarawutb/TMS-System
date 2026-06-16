@@ -12,48 +12,56 @@ public sealed class ShipmentListViewModel(ShipmentService shipmentService, Trans
     public Dictionary<long, string> VehicleLookup { get; private set; } = new();
     public Dictionary<long, string> DriverLookup { get; private set; } = new();
 
-    public string SearchQuery { get; set; } = string.Empty;
-    public string SelectedStatus { get; set; } = string.Empty;
+    private string searchQuery = string.Empty;
+    private string selectedStatus = string.Empty;
+
+    public string SearchQuery
+    {
+        get => searchQuery;
+        set => searchQuery = value;
+    }
+
+    public string SelectedStatus
+    {
+        get => selectedStatus;
+        set => selectedStatus = value;
+    }
+
     public bool IsLoading { get; private set; } = true;
+    public PaginationState Pagination { get; } = new();
 
     public async Task InitializeAsync()
     {
-        await LoadDataAsync();
+        await LoadLookupDataAsync();
+        await LoadPageAsync();
     }
 
-    public async Task LoadDataAsync()
+    public async Task LoadPageAsync()
     {
         IsLoading = true;
-
-        var shipmentsResult = await shipmentService.GetShipmentsAsync();
-        if (shipmentsResult.IsSuccess)
+        var shipmentsResult = await shipmentService.GetShipmentsPageAsync(Pagination.CurrentPage, Pagination.PageSize, SearchQuery, SelectedStatus);
+        if (shipmentsResult.IsSuccess && shipmentsResult.Data is not null)
         {
-            Shipments = shipmentsResult.Data ?? new();
+            Shipments = shipmentsResult.Data.Items.ToList();
+            Pagination.ApplyMetadata(shipmentsResult.Data);
         }
-
-        // Fetch lookups
-        var ordersResult = await orderService.GetOrdersAsync();
-        if (ordersResult.IsSuccess && ordersResult.Data is not null)
+        else
         {
-            OrderLookup = ordersResult.Data.ToDictionary(o => o.TransportOrderId, o => o.TransportOrderNo);
+            Shipments = new();
+            Pagination.SetTotal(0);
         }
-
-        var carriers = await shipmentService.GetCarriersAsync();
-        CarrierLookup = carriers.ToDictionary(c => c.CarrierId, c => c.CarrierName);
-
-        var vehicles = await shipmentService.GetVehiclesAsync();
-        VehicleLookup = vehicles.ToDictionary(v => v.VehicleId, v => $"{v.VehicleNo} ({v.VehicleType})");
-
-        var drivers = await shipmentService.GetDriversAsync();
-        DriverLookup = drivers.ToDictionary(d => d.DriverId, d => d.DriverName);
 
         IsLoading = false;
     }
 
-    public List<Shipment> FilteredShipments => Shipments
-        .Where(s => string.IsNullOrWhiteSpace(SearchQuery) || s.ShipmentNo.Contains(SearchQuery, StringComparison.OrdinalIgnoreCase))
-        .Where(s => string.IsNullOrWhiteSpace(SelectedStatus) || s.ShipmentStatus == SelectedStatus)
-        .ToList();
+    public async Task LoadFirstPageAsync()
+    {
+        Pagination.Reset();
+        await LoadPageAsync();
+    }
+
+    public List<Shipment> FilteredShipments => Shipments;
+    public IReadOnlyList<Shipment> PagedShipments => Shipments;
 
     public string GetOrderNo(long id) => OrderLookup.TryGetValue(id, out var orderNo) ? orderNo : $"#{id}";
     public string GetCarrierName(long? id) => id.HasValue && CarrierLookup.TryGetValue(id.Value, out var name) ? name : "Not Assigned";
@@ -69,14 +77,33 @@ public sealed class ShipmentListViewModel(ShipmentService shipmentService, Trans
         _ => "bg-light text-dark border"
     };
 
-    public void ClearFilters()
+    public async Task ClearFiltersAsync()
     {
         SearchQuery = string.Empty;
         SelectedStatus = string.Empty;
+        await LoadFirstPageAsync();
     }
 
     public void ViewDetail(long id)
     {
         navigationManager.NavigateTo($"shipments/{id}");
+    }
+
+    private async Task LoadLookupDataAsync()
+    {
+        var ordersResult = await orderService.GetOrdersAsync();
+        if (ordersResult.IsSuccess && ordersResult.Data is not null)
+        {
+            OrderLookup = ordersResult.Data.ToDictionary(o => o.TransportOrderId, o => o.TransportOrderNo);
+        }
+
+        var carriers = await shipmentService.GetCarriersAsync();
+        CarrierLookup = carriers.ToDictionary(c => c.CarrierId, c => c.CarrierName);
+
+        var vehicles = await shipmentService.GetVehiclesAsync();
+        VehicleLookup = vehicles.ToDictionary(v => v.VehicleId, v => $"{v.VehicleNo} ({v.VehicleType})");
+
+        var drivers = await shipmentService.GetDriversAsync();
+        DriverLookup = drivers.ToDictionary(d => d.DriverId, d => d.DriverName);
     }
 }

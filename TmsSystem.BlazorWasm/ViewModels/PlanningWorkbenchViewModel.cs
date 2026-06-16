@@ -11,10 +11,14 @@ public sealed class PlanningWorkbenchViewModel(PlanningService planningService, 
     public bool IsLoading { get; private set; } = true;
     public bool IsSolving { get; private set; }
     public string ErrorMessage { get; private set; } = string.Empty;
+    public PaginationState AvailableOrdersPagination { get; } = new();
+    public PaginationState RoutePlansPagination { get; } = new();
 
-    public IReadOnlyList<PlanningOrderDto> AvailableOrders => Workbench.AvailableOrders;
-    public IReadOnlyList<RoutePlanSummaryDto> RoutePlans => Workbench.RoutePlans;
+    public IReadOnlyList<PlanningOrderDto> AvailableOrders => Workbench.AvailableOrdersPage.Items;
+    public IReadOnlyList<RoutePlanSummaryDto> RoutePlans => Workbench.RoutePlansPage.Items;
     public IReadOnlyList<LoadPlanSummaryDto> LoadPlans => Workbench.LoadPlans;
+    public IReadOnlyList<PlanningOrderDto> PagedAvailableOrders => AvailableOrders;
+    public IReadOnlyList<RoutePlanSummaryDto> PagedRoutePlans => RoutePlans;
     public decimal SelectedWeightKg => AvailableOrders.Where(order => SelectedOrderIds.Contains(order.TransportOrderId)).Sum(order => order.TotalWeightKg);
     public decimal SelectedVolumeM3 => AvailableOrders.Where(order => SelectedOrderIds.Contains(order.TransportOrderId)).Sum(order => order.TotalVolumeM3);
 
@@ -24,14 +28,18 @@ public sealed class PlanningWorkbenchViewModel(PlanningService planningService, 
     {
         IsLoading = true;
         ErrorMessage = string.Empty;
-        var result = await planningService.GetWorkbenchAsync();
+        var result = await planningService.GetWorkbenchAsync(AvailableOrdersPagination.CurrentPage, RoutePlansPagination.CurrentPage, AvailableOrdersPagination.PageSize);
         if (result.IsSuccess && result.Data is not null)
         {
             Workbench = result.Data;
+            AvailableOrdersPagination.ApplyMetadata(result.Data.AvailableOrdersPage);
+            RoutePlansPagination.ApplyMetadata(result.Data.RoutePlansPage);
         }
         else
         {
             ErrorMessage = result.Message;
+            AvailableOrdersPagination.SetTotal(0);
+            RoutePlansPagination.SetTotal(0);
         }
 
         IsLoading = false;

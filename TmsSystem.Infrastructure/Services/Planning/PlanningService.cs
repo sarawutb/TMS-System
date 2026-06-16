@@ -12,14 +12,26 @@ public sealed class PlanningService(TmsDbContext dbContext, IOptimizationSolverS
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
-    public async Task<OperationResult<PlanningWorkbenchDto>> GetWorkbenchAsync(CancellationToken cancellationToken = default)
+    public async Task<OperationResult<PlanningWorkbenchDto>> GetWorkbenchAsync(
+        int availableOrdersPageNumber = 1,
+        int routePlansPageNumber = 1,
+        int pageSize = 10,
+        CancellationToken cancellationToken = default)
     {
-        var orders = await dbContext.TransportOrders
+        availableOrdersPageNumber = Math.Max(1, availableOrdersPageNumber);
+        routePlansPageNumber = Math.Max(1, routePlansPageNumber);
+        pageSize = Math.Clamp(pageSize, 1, 100);
+
+        var ordersQuery = dbContext.TransportOrders
             .AsNoTracking()
             .Where(order => order.IsActive && order.Status != "Completed" && order.Status != "Cancelled")
             .OrderBy(order => order.RequestedPickupDate ?? DateTime.MaxValue)
-            .ThenByDescending(order => order.Priority)
-            .Take(50)
+            .ThenByDescending(order => order.Priority);
+
+        var totalOrders = await ordersQuery.CountAsync(cancellationToken);
+        var orders = await ordersQuery
+            .Skip((availableOrdersPageNumber - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync(cancellationToken);
 
         var orderIds = orders.Select(order => order.TransportOrderId).ToArray();
@@ -35,22 +47,32 @@ public sealed class PlanningService(TmsDbContext dbContext, IOptimizationSolverS
             .AsNoTracking()
             .Where(location => locationIds.Contains(location.LocationId))
             .ToDictionaryAsync(location => location.LocationId, cancellationToken);
-        var routePlans = await dbContext.RoutePlans
+
+        var routePlansQuery = dbContext.RoutePlans
             .AsNoTracking()
-            .OrderByDescending(route => route.PlanDate)
-            .Take(20)
+            .OrderByDescending(route => route.PlanDate);
+        var totalRoutePlans = await routePlansQuery.CountAsync(cancellationToken);
+        var routePlans = await routePlansQuery
+            .Skip((routePlansPageNumber - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync(cancellationToken);
+
         var loadPlans = await dbContext.LoadPlans
             .AsNoTracking()
             .OrderByDescending(load => load.CreateDate)
             .Take(20)
             .ToListAsync(cancellationToken);
 
+        var availableOrders = orders.Select(order => ToPlanningOrder(order, items, locations)).ToArray();
+        var routeSummaries = routePlans.Select(ToRouteSummary).ToArray();
+
         return OperationResult<PlanningWorkbenchDto>.Success(new PlanningWorkbenchDto
         {
-            AvailableOrders = orders.Select(order => ToPlanningOrder(order, items, locations)).ToArray(),
-            RoutePlans = routePlans.Select(ToRouteSummary).ToArray(),
-            LoadPlans = loadPlans.Select(ToLoadSummary).ToArray()
+            AvailableOrders = availableOrders,
+            RoutePlans = routeSummaries,
+            LoadPlans = loadPlans.Select(ToLoadSummary).ToArray(),
+            AvailableOrdersPage = PagedResult<PlanningOrderDto>.Create(availableOrders, totalOrders, availableOrdersPageNumber, pageSize),
+            RoutePlansPage = PagedResult<RoutePlanSummaryDto>.Create(routeSummaries, totalRoutePlans, routePlansPageNumber, pageSize)
         });
     }
 
@@ -136,23 +158,23 @@ public sealed class PlanningService(TmsDbContext dbContext, IOptimizationSolverS
         return OperationResult<LoadPlanSummaryDto>.Success(ToLoadSummary(load), "Load plan created.");
     }
 
-    public async Task<OperationResult<RoutePlanSummaryDto>> GetRoutePlanAsync(long routePlanId, CancellationToken cancellationToken = default)
+    public async Task<OperationResult<RoutePlanSummaryDto>> GetRoutePlanAsync(long routePlanId, int stopsPageNumber = 1, int pageSize = 10, CancellationToken cancellationToken = default)
     {
         var route = await dbContext.RoutePlans.AsNoTracking().FirstOrDefaultAsync(x => x.RoutePlanId == routePlanId, cancellationToken);
         return route is null
             ? OperationResult<RoutePlanSummaryDto>.Failure("Route plan not found.")
-            : OperationResult<RoutePlanSummaryDto>.Success(ToRouteSummary(route));
+            : OperationResult<RoutePlanSummaryDto>.Success(ToRouteSummary(route, stopsPageNumber, pageSize));
     }
 
-    public async Task<OperationResult<LoadPlanSummaryDto>> GetLoadPlanAsync(long loadPlanId, CancellationToken cancellationToken = default)
+    public async Task<OperationResult<LoadPlanSummaryDto>> GetLoadPlanAsync(long loadPlanId, int placementsPageNumber = 1, int pageSize = 10, CancellationToken cancellationToken = default)
     {
         var load = await dbContext.LoadPlans.AsNoTracking().FirstOrDefaultAsync(x => x.LoadPlanId == loadPlanId, cancellationToken);
         return load is null
             ? OperationResult<LoadPlanSummaryDto>.Failure("Load plan not found.")
-            : OperationResult<LoadPlanSummaryDto>.Success(ToLoadSummary(load));
+            : OperationResult<LoadPlanSummaryDto>.Success(ToLoadSummary(load, placementsPageNumber, pageSize));
     }
 
-    public async Task<OperationResult<RoutePlanSummaryDto>> UpdateRouteStopsAsync(long routePlanId, IReadOnlyList<RouteStopDto> stops, CancellationToken cancellationToken = default)
+    public async Task<OperationResult<RoutePlanSummaryDto>> UpdateRouteStopsAsync(long routePlanId, IReadOnlyList<RouteStopDto> stops, int stopsPageNumber = 1, int pageSize = 10, CancellationToken cancellationToken = default)
     {
         var route = await dbContext.RoutePlans.FirstOrDefaultAsync(x => x.RoutePlanId == routePlanId, cancellationToken);
         if (route is null)
@@ -169,7 +191,7 @@ public sealed class PlanningService(TmsDbContext dbContext, IOptimizationSolverS
         route.ReviseDate = DateTime.UtcNow;
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return OperationResult<RoutePlanSummaryDto>.Success(ToRouteSummary(route), "Route stops updated.");
+        return OperationResult<RoutePlanSummaryDto>.Success(ToRouteSummary(route, stopsPageNumber, pageSize), "Route stops updated.");
     }
 
     public async Task<OperationResult<RoutePlanSummaryDto>> UpdateRouteStatusAsync(long routePlanId, string status, CancellationToken cancellationToken = default)
@@ -213,7 +235,14 @@ public sealed class PlanningService(TmsDbContext dbContext, IOptimizationSolverS
     }
 
     private static RoutePlanSummaryDto ToRouteSummary(RoutePlan route)
+        => ToRouteSummary(route, 1, 10);
+
+    private static RoutePlanSummaryDto ToRouteSummary(RoutePlan route, int stopsPageNumber, int pageSize)
     {
+        var stops = Deserialize<IReadOnlyList<RouteStopDto>>(route.StopSequenceJson)?.ToArray() ?? Array.Empty<RouteStopDto>();
+        stopsPageNumber = Math.Max(1, stopsPageNumber);
+        pageSize = Math.Clamp(pageSize, 1, 100);
+
         return new RoutePlanSummaryDto
         {
             RoutePlanId = route.RoutePlanId,
@@ -229,13 +258,21 @@ public sealed class PlanningService(TmsDbContext dbContext, IOptimizationSolverS
             RiskScore = route.RiskScore ?? 0m,
             EarliestPickupWindow = route.EarliestPickupWindow,
             LatestDeliveryWindow = route.LatestDeliveryWindow,
-            Stops = Deserialize<IReadOnlyList<RouteStopDto>>(route.StopSequenceJson) ?? Array.Empty<RouteStopDto>(),
+            Stops = stops,
+            StopsPage = PagedResult<RouteStopDto>.Create(stops, stopsPageNumber, pageSize),
             ComplianceIssues = Deserialize<IReadOnlyList<string>>(route.ComplianceIssuesJson) ?? Array.Empty<string>()
         };
     }
 
     private static LoadPlanSummaryDto ToLoadSummary(LoadPlan load)
+        => ToLoadSummary(load, 1, 10);
+
+    private static LoadPlanSummaryDto ToLoadSummary(LoadPlan load, int placementsPageNumber, int pageSize)
     {
+        var placements = Deserialize<IReadOnlyList<CargoPlacementDto>>(load.PlacementJson)?.ToArray() ?? Array.Empty<CargoPlacementDto>();
+        placementsPageNumber = Math.Max(1, placementsPageNumber);
+        pageSize = Math.Clamp(pageSize, 1, 100);
+
         return new LoadPlanSummaryDto
         {
             LoadPlanId = load.LoadPlanId,
@@ -254,7 +291,8 @@ public sealed class PlanningService(TmsDbContext dbContext, IOptimizationSolverS
                 WidthM = load.ContainerWidthM ?? 0m,
                 HeightM = load.ContainerHeightM ?? 0m
             },
-            Placements = Deserialize<IReadOnlyList<CargoPlacementDto>>(load.PlacementJson) ?? Array.Empty<CargoPlacementDto>(),
+            Placements = placements,
+            PlacementsPage = PagedResult<CargoPlacementDto>.Create(placements, placementsPageNumber, pageSize),
             ConstraintIssues = Deserialize<IReadOnlyList<string>>(load.ConstraintIssuesJson) ?? Array.Empty<string>()
         };
     }

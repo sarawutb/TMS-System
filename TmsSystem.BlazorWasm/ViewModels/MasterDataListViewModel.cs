@@ -12,17 +12,26 @@ public sealed class MasterDataListViewModel(MasterDataService masterDataService,
     public MasterDataDefinition SelectedDefinition { get; private set; } = MasterDataDefinitions.Default;
     public List<object> Items { get; private set; } = new();
     public Dictionary<string, Dictionary<string, string>> LookupLabels { get; private set; } = new();
-    public string SearchQuery { get; set; } = string.Empty;
+    private string searchQuery = string.Empty;
+
+    public string SearchQuery
+    {
+        get => searchQuery;
+        set => searchQuery = value;
+    }
+
     public string? ErrorMessage { get; private set; }
     public bool IsLoading { get; private set; }
     public bool ShowDeleteModal { get; private set; }
     public long DeleteId { get; private set; }
     public string DeleteDisplayName { get; private set; } = string.Empty;
+    public PaginationState Pagination { get; } = new();
 
     public async Task InitializeAsync(string? entityKey)
     {
         SelectedDefinition = MasterDataDefinitions.Find(entityKey);
         SearchQuery = string.Empty;
+        Pagination.Reset();
         ErrorMessage = null;
         await LoadAsync();
     }
@@ -36,20 +45,27 @@ public sealed class MasterDataListViewModel(MasterDataService masterDataService,
         var result = await LoadItemsAsync(SelectedDefinition);
         if (result.IsSuccess && result.Data is not null)
         {
-            Items = result.Data;
+            Items = result.Data.Items.ToList();
+            Pagination.ApplyMetadata(result.Data);
         }
         else
         {
             Items = new();
             ErrorMessage = result.Message;
+            Pagination.SetTotal(0);
         }
 
         IsLoading = false;
     }
 
-    public IReadOnlyList<object> FilteredItems => Items
-        .Where(item => string.IsNullOrWhiteSpace(SearchQuery) || SelectedDefinition.ListFields.Any(field => GetDisplayValue(item, field).Contains(SearchQuery, StringComparison.OrdinalIgnoreCase)))
-        .ToList();
+    public async Task LoadFirstPageAsync()
+    {
+        Pagination.Reset();
+        await LoadAsync();
+    }
+
+    public IReadOnlyList<object> FilteredItems => Items;
+    public IReadOnlyList<object> PagedItems => Items;
 
     public string GetDisplayValue(object item, MasterDataFieldDefinition field)
     {
@@ -106,8 +122,8 @@ public sealed class MasterDataListViewModel(MasterDataService masterDataService,
         var result = await masterDataService.DeleteAsync(SelectedDefinition.Endpoint, DeleteId);
         if (result.IsSuccess)
         {
-            Items.RemoveAll(item => GetId(item) == DeleteId);
             ErrorMessage = null;
+            await LoadAsync();
         }
         else
         {
@@ -115,7 +131,7 @@ public sealed class MasterDataListViewModel(MasterDataService masterDataService,
         }
     }
 
-    private async Task<OperationResult<List<object>>> LoadItemsAsync(MasterDataDefinition definition)
+    private async Task<OperationResult<PagedResult<object>>> LoadItemsAsync(MasterDataDefinition definition)
         => definition.Key switch
         {
             "factories" => await LoadTypedItemsAsync<Factory>(definition.Endpoint, definition.Title),
@@ -128,15 +144,19 @@ public sealed class MasterDataListViewModel(MasterDataService masterDataService,
             "provinces" => await LoadTypedItemsAsync<Province>(definition.Endpoint, definition.Title),
             "districts" => await LoadTypedItemsAsync<District>(definition.Endpoint, definition.Title),
             "subdistricts" => await LoadTypedItemsAsync<SubDistrict>(definition.Endpoint, definition.Title),
-            _ => OperationResult<List<object>>.Failure("Unsupported master-data entity.")
+            _ => OperationResult<PagedResult<object>>.Failure("Unsupported master-data entity.")
         };
 
-    private async Task<OperationResult<List<object>>> LoadTypedItemsAsync<T>(string endpoint, string label)
+    private async Task<OperationResult<PagedResult<object>>> LoadTypedItemsAsync<T>(string endpoint, string label)
     {
-        var result = await masterDataService.GetListAsync<T>(endpoint, label);
-        return result.IsSuccess && result.Data is not null
-            ? OperationResult<List<object>>.Success(result.Data.Cast<object>().ToList(), result.Message)
-            : OperationResult<List<object>>.Failure(result.Message);
+        var result = await masterDataService.GetPagedListAsync<T>(endpoint, label, Pagination.CurrentPage, Pagination.PageSize, SearchQuery);
+        if (!result.IsSuccess || result.Data is null)
+        {
+            return OperationResult<PagedResult<object>>.Failure(result.Message);
+        }
+
+        var page = PagedResult<object>.Create(result.Data.Items.Cast<object>().ToArray(), result.Data.TotalItems, result.Data.PageNumber, result.Data.PageSize);
+        return OperationResult<PagedResult<object>>.Success(page, result.Message);
     }
 
     private async Task LoadLookupLabelsAsync()

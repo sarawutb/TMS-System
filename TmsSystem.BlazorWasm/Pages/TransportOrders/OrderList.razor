@@ -21,12 +21,12 @@
             <div class="col-md-4 col-sm-12">
                 <div class="position-relative">
                     <input type="text" class="form-control form-control-sm ps-5" style="border-radius: 6px; height: 38px;"
-                           placeholder="Search by Order No..." @bind="ViewModel.SearchQuery" @bind:event="oninput" />
+                           placeholder="Search by Order No..." @bind="ViewModel.SearchQuery" @bind:event="oninput" @bind:after="ViewModel.LoadFirstPageAsync" />
                     <i class="bi bi-search position-absolute text-muted" style="left: 16px; top: 50%; transform: translateY(-50%);"></i>
                 </div>
             </div>
             <div class="col-md-3 col-sm-6">
-                <select class="form-select form-select-sm" style="border-radius: 6px; height: 38px;" @bind="ViewModel.SelectedPriority">
+                <select class="form-select form-select-sm" style="border-radius: 6px; height: 38px;" @bind="ViewModel.SelectedPriority" @bind:after="ViewModel.LoadFirstPageAsync">
                     <option value="">All Priorities</option>
                     <option value="High">High</option>
                     <option value="Medium">Medium</option>
@@ -34,7 +34,7 @@
                 </select>
             </div>
             <div class="col-md-3 col-sm-6">
-                <select class="form-select form-select-sm" style="border-radius: 6px; height: 38px;" @bind="ViewModel.SelectedStatus">
+                <select class="form-select form-select-sm" style="border-radius: 6px; height: 38px;" @bind="ViewModel.SelectedStatus" @bind:after="ViewModel.LoadFirstPageAsync">
                     <option value="">All Statuses</option>
                     <option value="New">New</option>
                     <option value="Draft">Draft</option>
@@ -44,7 +44,7 @@
                 </select>
             </div>
             <div class="col-md-2 col-sm-12 text-end">
-                <button class="btn btn-outline-secondary w-100 fw-semibold" style="border-radius: 6px; height: 38px;" @onclick="ViewModel.ClearFilters">
+                <button class="btn btn-outline-secondary w-100 fw-semibold" style="border-radius: 6px; height: 38px;" @onclick="ViewModel.ClearFiltersAsync">
                     CLEAR
                 </button>
             </div>
@@ -88,7 +88,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var order in ViewModel.FilteredOrders)
+                        @foreach (var order in ViewModel.PagedOrders)
                         {
                             <tr>
                                 <td class="fw-semibold text-primary" style="cursor: pointer;" @onclick="() => ViewModel.ViewDetail(order.TransportOrderId)">
@@ -140,6 +140,7 @@
                     </tbody>
                 </table>
             </div>
+            <TablePagination State="ViewModel.Pagination" PageChanged="ViewModel.LoadPageAsync" />
         }
     </div>
 </div>
@@ -171,4 +172,5 @@
     {
         await ViewModel.InitializeAsync();
     }
+
 }

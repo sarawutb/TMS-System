@@ -1,0 +1,57 @@
+﻿@if (State.TotalItems > 0)
+{
+    <div class="tms-pagination">
+        <div class="tms-pagination-summary">
+            Showing @State.FirstItemNumber-@State.LastItemNumber of @State.TotalItems
+        </div>
+        <nav aria-label="Table pagination">
+            <ul class="pagination pagination-sm mb-0">
+                <li class="page-item @(State.HasPreviousPage ? null : "disabled")">
+                    <button type="button"
+                            class="page-link"
+                            aria-label="Previous page"
+                            disabled="@(!State.HasPreviousPage)"
+                            @onclick="PreviousAsync">
+                        <i class="bi bi-chevron-left"></i>
+                    </button>
+                </li>
+                @foreach (var pageNumber in State.PageNumbers)
+                {
+                    <li class="page-item @(pageNumber == State.CurrentPage ? "active" : null)">
+                        <button type="button"
+                                class="page-link"
+                                aria-label="Page @pageNumber"
+                                aria-current="@(pageNumber == State.CurrentPage ? "page" : null)"
+                                @onclick="() => GoToPageAsync(pageNumber)">
+                            @pageNumber
+                        </button>
+                    </li>
+                }
+                <li class="page-item @(State.HasNextPage ? null : "disabled")">
+                    <button type="button"
+                            class="page-link"
+                            aria-label="Next page"
+                            disabled="@(!State.HasNextPage)"
+                            @onclick="NextAsync">
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+                </li>
+            </ul>
+        </nav>
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired] public PaginationState State { get; set; } = default!;
+    [Parameter] public EventCallback PageChanged { get; set; }
+
+    private async Task GoToPageAsync(int page)
+    {
+        State.SetPage(page);
+        await PageChanged.InvokeAsync();
+    }
+
+    private Task PreviousAsync() => GoToPageAsync(State.CurrentPage - 1);
+
+    private Task NextAsync() => GoToPageAsync(State.CurrentPage + 1);
+}

@@ -36,7 +36,8 @@
                            style="border-radius: 6px; height: 38px;"
                            placeholder="Search records..."
                            @bind="ViewModel.SearchQuery"
-                           @bind:event="oninput" />
+                           @bind:event="oninput"
+                           @bind:after="ViewModel.LoadFirstPageAsync" />
                     <i class="bi bi-search position-absolute text-muted" style="left: 16px; top: 50%; transform: translateY(-50%);"></i>
                 </div>
             </div>
@@ -82,7 +83,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var item in ViewModel.FilteredItems)
+                        @foreach (var item in ViewModel.PagedItems)
                         {
                             <tr>
                                 @foreach (var field in ViewModel.SelectedDefinition.ListFields)
@@ -111,6 +112,7 @@
                     </tbody>
                 </table>
             </div>
+            <TablePagination State="ViewModel.Pagination" PageChanged="ViewModel.LoadAsync" />
         }
     </div>
 </div>
@@ -143,4 +145,5 @@
     {
         await ViewModel.InitializeAsync(EntityKey);
     }
+
 }

@@ -46,6 +46,16 @@ public sealed class MasterDataService(HttpClient httpClient)
     public Task<OperationResult<List<T>>> GetListAsync<T>(string endpoint, string label, CancellationToken cancellationToken = default)
         => SendAsync<List<T>>(() => httpClient.GetAsync(endpoint, cancellationToken), $"Failed to retrieve {label}.", cancellationToken);
 
+    public Task<OperationResult<PagedResult<T>>> GetPagedListAsync<T>(string endpoint, string label, int pageNumber, int pageSize, string? search = null, CancellationToken cancellationToken = default)
+    {
+        var query = BuildQueryString([
+            ("pageNumber", pageNumber.ToString()),
+            ("pageSize", pageSize.ToString()),
+            ("search", search)
+        ]);
+        return SendAsync<PagedResult<T>>(() => httpClient.GetAsync($"{endpoint}/paged{query}", cancellationToken), $"Failed to retrieve {label}.", cancellationToken);
+    }
+
     public Task<OperationResult<T>> GetByIdAsync<T>(string endpoint, long id, CancellationToken cancellationToken = default)
         => SendAsync<T>(() => httpClient.GetAsync($"{endpoint}/{id}", cancellationToken), $"Failed to retrieve {typeof(T).Name}.", cancellationToken);
 
@@ -94,6 +104,15 @@ public sealed class MasterDataService(HttpClient httpClient)
         {
             return OperationResult<T>.Failure($"Connection error: {ex.Message}");
         }
+    }
+
+    private static string BuildQueryString(IEnumerable<(string Key, string? Value)> values)
+    {
+        var pairs = values
+            .Where(value => !string.IsNullOrWhiteSpace(value.Value))
+            .Select(value => $"{Uri.EscapeDataString(value.Key)}={Uri.EscapeDataString(value.Value!)}")
+            .ToArray();
+        return pairs.Length == 0 ? string.Empty : "?" + string.Join("&", pairs);
     }
 
     private static string BuildError(string message, IEnumerable<string>? errors)

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components;
+using TmsSystem.Application.Common;
 using TmsSystem.Application.Dtos.Planning;
 using TmsSystem.BlazorWasm.Services;
 
@@ -11,20 +12,36 @@ public sealed class RoutePlanDetailViewModel(PlanningService planningService, Na
     public bool IsLoading { get; private set; } = true;
     public bool IsSaving { get; private set; }
     public string ErrorMessage { get; private set; } = string.Empty;
+    public PaginationState StopsPagination { get; } = new();
+    public IReadOnlyList<RouteStopDto> PagedEditableStops => RoutePlan?.StopsPage.Items ?? Array.Empty<RouteStopDto>();
 
     public async Task InitializeAsync(long routePlanId)
     {
+        StopsPagination.Reset();
+        await LoadPageAsync(routePlanId);
+    }
+
+    public async Task LoadPageAsync(long? routePlanId = null)
+    {
+        var targetRoutePlanId = routePlanId ?? RoutePlan?.RoutePlanId;
+        if (targetRoutePlanId is null)
+        {
+            return;
+        }
+
         IsLoading = true;
         ErrorMessage = string.Empty;
-        var result = await planningService.GetRoutePlanAsync(routePlanId);
+        var result = await planningService.GetRoutePlanAsync(targetRoutePlanId.Value, StopsPagination.CurrentPage, StopsPagination.PageSize);
         if (result.IsSuccess && result.Data is not null)
         {
             RoutePlan = result.Data;
             EditableStops = result.Data.Stops.OrderBy(stop => stop.Sequence).ToList();
+            StopsPagination.ApplyMetadata(result.Data.StopsPage);
         }
         else
         {
             ErrorMessage = result.Message;
+            StopsPagination.SetTotal(0);
         }
 
         IsLoading = false;
@@ -61,11 +78,12 @@ public sealed class RoutePlanDetailViewModel(PlanningService planningService, Na
 
         IsSaving = true;
         ErrorMessage = string.Empty;
-        var result = await planningService.UpdateRouteStopsAsync(RoutePlan.RoutePlanId, EditableStops);
+        var result = await planningService.UpdateRouteStopsAsync(RoutePlan.RoutePlanId, EditableStops, StopsPagination.CurrentPage, StopsPagination.PageSize);
         if (result.IsSuccess && result.Data is not null)
         {
             RoutePlan = result.Data;
             EditableStops = result.Data.Stops.OrderBy(stop => stop.Sequence).ToList();
+            StopsPagination.ApplyMetadata(result.Data.StopsPage);
         }
         else
         {
@@ -87,7 +105,10 @@ public sealed class RoutePlanDetailViewModel(PlanningService planningService, Na
         var result = await planningService.ApproveRouteAsync(RoutePlan.RoutePlanId);
         if (result.IsSuccess && result.Data is not null)
         {
-            RoutePlan = result.Data;
+            RoutePlan = result.Data with
+            {
+                StopsPage = PagedResult<RouteStopDto>.Create(EditableStops, StopsPagination.CurrentPage, StopsPagination.PageSize)
+            };
         }
         else
         {
@@ -131,5 +152,14 @@ public sealed class RoutePlanDetailViewModel(PlanningService planningService, Na
     private void Resequence()
     {
         EditableStops = EditableStops.Select((stop, index) => stop with { Sequence = index + 1 }).ToList();
+        if (RoutePlan is not null)
+        {
+            RoutePlan = RoutePlan with
+            {
+                Stops = EditableStops,
+                StopsPage = PagedResult<RouteStopDto>.Create(EditableStops, StopsPagination.CurrentPage, StopsPagination.PageSize)
+            };
+            StopsPagination.ApplyMetadata(RoutePlan.StopsPage);
+        }
     }
 }

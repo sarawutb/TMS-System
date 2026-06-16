@@ -18,6 +18,19 @@ public sealed class ShipmentsController : CrudController<Shipment>
         this.dbContext = dbContext;
     }
 
+    protected override IQueryable<Shipment> ApplyPagedFilters(IQueryable<Shipment> query, string? search)
+    {
+        query = ApplySearchFilter(query, search);
+
+        var status = Request.Query["status"].ToString();
+        if (!string.IsNullOrWhiteSpace(status))
+        {
+            query = query.Where(shipment => shipment.ShipmentStatus == status);
+        }
+
+        return query;
+    }
+
     [HttpPost("{id:long}/status")]
     public async Task<IActionResult> UpdateStatus(long id, UpdateShipmentStatusRequestDto request, CancellationToken cancellationToken)
     {

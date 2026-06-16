@@ -68,7 +68,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach (var order in ViewModel.AvailableOrders)
+                                @foreach (var order in ViewModel.PagedAvailableOrders)
                                 {
                                     <tr>
                                         <td>
@@ -96,6 +96,7 @@
                             </tbody>
                         </table>
                     </div>
+                    <TablePagination State="ViewModel.AvailableOrdersPagination" PageChanged="ViewModel.LoadAsync" />
                 }
             </div>
         </div>
@@ -138,7 +139,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var route in ViewModel.RoutePlans)
+                            @foreach (var route in ViewModel.PagedRoutePlans)
                             {
                                 <tr>
                                     <td class="fw-semibold text-primary" style="cursor: pointer;" @onclick="() => ViewModel.ViewRoute(route.RoutePlanId)">@route.RoutePlanNo</td>
@@ -160,6 +161,7 @@
                         </tbody>
                     </table>
                 </div>
+                <TablePagination State="ViewModel.RoutePlansPagination" PageChanged="ViewModel.LoadAsync" />
             </div>
         </div>
 
@@ -193,4 +195,5 @@
     {
         await ViewModel.InitializeAsync();
     }
+
 }

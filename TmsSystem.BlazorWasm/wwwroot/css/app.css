@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+﻿@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
     --primary-color: #1890ff;
@@ -554,6 +554,52 @@ a:hover {
 
 .tms-table tbody tr:hover {
     background-color: #fafafa;
+}
+
+.tms-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 16px;
+    border-top: 1px solid var(--border-color);
+    background-color: #ffffff;
+}
+
+.tms-pagination-summary {
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.tms-pagination .page-link {
+    min-width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-primary);
+    border-color: var(--border-color);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.tms-pagination .page-item.active .page-link {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    color: #ffffff;
+}
+
+.tms-pagination .page-item.disabled .page-link {
+    color: var(--text-secondary);
+    background-color: #fafafa;
+}
+
+@media (max-width: 576px) {
+    .tms-pagination {
+        align-items: flex-start;
+        flex-direction: column;
+    }
 }
 
 .master-data-icon {

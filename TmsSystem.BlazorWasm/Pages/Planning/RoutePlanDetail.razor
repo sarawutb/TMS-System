@@ -89,10 +89,11 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @for (var i = 0; i < ViewModel.EditableStops.Count; i++)
+                        @{ var stopPageStartIndex = ViewModel.StopsPagination.StartIndex; }
+                        @for (var pageIndex = 0; pageIndex < ViewModel.PagedEditableStops.Count; pageIndex++)
                         {
-                            var index = i;
-                            var stop = ViewModel.EditableStops[index];
+                            var index = stopPageStartIndex + pageIndex;
+                            var stop = ViewModel.PagedEditableStops[pageIndex];
                             <tr>
                                 <td class="fw-semibold">@stop.Sequence</td>
                                 <td>
@@ -116,6 +117,7 @@
                     </tbody>
                 </table>
             </div>
+            <TablePagination State="ViewModel.StopsPagination" PageChanged="() => ViewModel.LoadPageAsync()" />
         </div>
     }
 </div>
@@ -127,4 +129,5 @@
     {
         await ViewModel.InitializeAsync(RoutePlanId);
     }
+
 }

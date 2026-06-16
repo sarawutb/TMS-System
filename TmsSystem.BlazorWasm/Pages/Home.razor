@@ -1,5 +1,6 @@
 @page "/"
 @attribute [Authorize]
+@inject ShipmentListViewModel ViewModel
 
 <PageTitle>TMS Control Tower Dashboard</PageTitle>
 
@@ -74,35 +75,55 @@
                 <button class="btn btn-sm btn-outline-primary"><i class="bi bi-arrow-clockwise me-1"></i> Refresh</button>
             </div>
             
-            <div class="table-responsive">
-                <table class="tms-table">
-                    <thead>
-                        <tr>
-                            <th>Shipment No.</th>
-                            <th>Carrier</th>
-                            <th>Vehicle</th>
-                            <th>Route</th>
-                            <th>ETA</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var shipment in sampleShipments)
-                        {
+            @if (ViewModel.IsLoading)
+            {
+                <div class="p-5 text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="text-muted mt-2 small">Loading live shipments...</p>
+                </div>
+            }
+            else if (ViewModel.PagedShipments.Count == 0)
+            {
+                <div class="p-5 text-center">
+                    <i class="bi bi-box-seam fs-1 text-muted"></i>
+                    <p class="text-muted mt-2 small">No live shipments found.</p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="tms-table">
+                        <thead>
                             <tr>
-                                <td class="fw-semibold text-primary">@shipment.No</td>
-                                <td>@shipment.Carrier</td>
-                                <td><i class="bi bi-truck me-1 text-muted"></i>@shipment.Vehicle</td>
-                                <td class="text-truncate" style="max-width: 200px;">@shipment.Route</td>
-                                <td>@shipment.Eta.ToString("yyyy-MM-dd HH:mm")</td>
-                                <td>
-                                    <span class="tms-badge @GetStatusClass(shipment.Status)">@shipment.Status</span>
-                                </td>
+                                <th>Shipment No.</th>
+                                <th>Order Ref</th>
+                                <th>Carrier</th>
+                                <th>Vehicle</th>
+                                <th>ETA</th>
+                                <th>Status</th>
                             </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
+                        </thead>
+                        <tbody>
+                            @foreach (var shipment in ViewModel.PagedShipments)
+                            {
+                                <tr>
+                                    <td class="fw-semibold text-primary">@shipment.ShipmentNo</td>
+                                    <td>@(shipment.TransportOrderId.HasValue ? ViewModel.GetOrderNo(shipment.TransportOrderId.Value) : "-")</td>
+                                    <td>@ViewModel.GetCarrierName(shipment.CarrierId)</td>
+                                    <td><i class="bi bi-truck me-1 text-muted"></i>@ViewModel.GetVehiclePlate(shipment.VehicleId)</td>
+                                    <td>@(shipment.LatestEta?.ToString("yyyy-MM-dd HH:mm") ?? shipment.PlannedDeliveryDate?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
+                                    <td>
+                                        <span class="tms-badge @ViewModel.GetStatusBadgeClass(shipment.ShipmentStatus)">@shipment.ShipmentStatus</span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <TablePagination State="ViewModel.Pagination" PageChanged="ViewModel.LoadPageAsync" />
+            }
         </div>
     </div>
     
@@ -149,23 +170,8 @@
 </div>
 
 @code {
-    private List<ShipmentMock> sampleShipments = new()
+    protected override async Task OnInitializedAsync()
     {
-        new("SH-2026-0081", "Kerry Logistics", "71-9231 BKK", "BKK Factory -> Chiang Mai WH", DateTime.Now.AddHours(2), "In Transit"),
-        new("SH-2026-0082", "SCG Logistics", "72-4012 CMI", "Chiang Mai Hub -> Lamphun Customer", DateTime.Now.AddMinutes(45), "At Delivery"),
-        new("SH-2026-0083", "Kerry Logistics", "65-1102 BKK", "BKK Factory -> Khon Kaen WH", DateTime.Now.AddHours(5).AddMinutes(15), "Delayed"),
-        new("SH-2026-0084", "Internal Fleet", "43-8822 HNY", "Hat Yai WH -> Songkhla Factory", DateTime.Now.AddHours(1).AddMinutes(10), "In Transit"),
-        new("SH-2026-0085", "Sittipong Transport", "73-0988 BKK", "BKK Port -> BKK Factory", DateTime.Now.AddHours(3).AddMinutes(30), "In Transit")
-    };
-
-    private string GetStatusClass(string status) => status switch
-    {
-        "In Transit" => "tms-badge-success",
-        "At Delivery" => "tms-badge-success",
-        "Delayed" => "tms-badge-warning",
-        "Exception" => "tms-badge-danger",
-        _ => "tms-badge-warning"
-    };
-
-    private record ShipmentMock(string No, string Carrier, string Vehicle, string Route, DateTime Eta, string Status);
+        await ViewModel.InitializeAsync();
+    }
 }

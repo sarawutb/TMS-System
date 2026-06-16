@@ -7,6 +7,24 @@ namespace TmsSystem.BlazorWasm.Services;
 
 public sealed class TransportOrderService(HttpClient httpClient)
 {
+    public Task<OperationResult<PagedResult<TransportOrder>>> GetOrdersPageAsync(
+        int pageNumber,
+        int pageSize,
+        string? search = null,
+        string? priority = null,
+        string? status = null,
+        CancellationToken cancellationToken = default)
+    {
+        var query = BuildQueryString([
+            ("pageNumber", pageNumber.ToString()),
+            ("pageSize", pageSize.ToString()),
+            ("search", search),
+            ("priority", priority),
+            ("status", status)
+        ]);
+        return SendAsync<PagedResult<TransportOrder>>(() => httpClient.GetAsync($"api/transport-order/paged{query}", cancellationToken), "Failed to retrieve transport orders.", cancellationToken);
+    }
+
     public async Task<OperationResult<List<TransportOrder>>> GetOrdersAsync(CancellationToken cancellationToken = default)
     {
         try
@@ -143,5 +161,33 @@ public sealed class TransportOrderService(HttpClient httpClient)
         {
             return new List<Location>();
         }
+    }
+
+    private static async Task<OperationResult<T>> SendAsync<T>(Func<Task<HttpResponseMessage>> send, string failureMessage, CancellationToken cancellationToken)
+    {
+        try
+        {
+            using var response = await send();
+            var result = await response.Content.ReadFromJsonAsync<ApiResponse<T>>(cancellationToken: cancellationToken);
+            if (result is null || !result.Success || result.Data is null)
+            {
+                return OperationResult<T>.Failure(result?.Message ?? failureMessage);
+            }
+
+            return OperationResult<T>.Success(result.Data, result.Message ?? "Success.");
+        }
+        catch (Exception ex)
+        {
+            return OperationResult<T>.Failure($"Connection error: {ex.Message}");
+        }
+    }
+
+    private static string BuildQueryString(IEnumerable<(string Key, string? Value)> values)
+    {
+        var pairs = values
+            .Where(value => !string.IsNullOrWhiteSpace(value.Value))
+            .Select(value => $"{Uri.EscapeDataString(value.Key)}={Uri.EscapeDataString(value.Value!)}")
+            .ToArray();
+        return pairs.Length == 0 ? string.Empty : "?" + string.Join("&", pairs);
     }
 }
