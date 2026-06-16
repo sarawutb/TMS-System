@@ -1,0 +1,36 @@
+﻿@inject LoadingService LoadingService
+@implements IDisposable
+
+@if (LoadingService.IsLoading)
+{
+    <div class="loading-overlay">
+        <div class="loading-box">
+
+            <div class="spinner-border text-primary"></div>
+
+            <div class="mt-3">
+                @LoadingService.Message
+            </div>
+
+            @if (LoadingService.CanCancel)
+            {
+                <button class="btn btn-light btn-sm mt-3"
+                        @onclick="LoadingService.Cancel">
+                    Cancel
+                </button>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    protected override void OnInitialized()
+    {
+        LoadingService.OnChange += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        LoadingService.OnChange -= StateHasChanged;
+    }
+}

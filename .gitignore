@@ -35,3 +35,4 @@ packages/
 ## Local user secrets & OS junk
 .DS_Store
 Thumbs.db
+/.github

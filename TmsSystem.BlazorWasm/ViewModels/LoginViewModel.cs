@@ -1,11 +1,17 @@
 using System;
 using System.ComponentModel.DataAnnotations;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
 using TmsSystem.BlazorWasm.Services;
 
 namespace TmsSystem.BlazorWasm.ViewModels;
 
-public sealed class LoginViewModel(AuthSessionService authService, NavigationManager navigationManager)
+
+public sealed class LoginViewModel(
+    AuthSessionService authService,
+    NavigationManager navigationManager,
+    LoadingService loadingService)
+    : BaseViewModel(loadingService)
 {
     [Required(ErrorMessage = "Username is required.")]
     public string UserName { get; set; } = string.Empty;
@@ -14,7 +20,8 @@ public sealed class LoginViewModel(AuthSessionService authService, NavigationMan
     public string Password { get; set; } = string.Empty;
 
     public string? ErrorMessage { get; set; }
-    public bool IsLoggingIn { get; set; }
+
+    public bool IsLoggingIn { get => IsLoading; set => IsLoading = value; }
 
     public async Task HandleLoginAsync()
     {
