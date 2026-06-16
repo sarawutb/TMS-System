@@ -50,6 +50,8 @@ public static class MasterDataDefinitions
                 Field(nameof(Factory.FactoryName), "Factory"),
                 Field(nameof(Factory.IndustryType), "Industry"),
                 Field(nameof(Factory.TimeZone), "Time Zone"),
+                Field(nameof(Factory.TaxId), "Tax ID"),
+                Field(nameof(Factory.BranchCode), "Branch"),
                 Field(nameof(Factory.IsActive), "Active", MasterDataFieldType.Checkbox)
             ],
             [
@@ -57,6 +59,8 @@ public static class MasterDataDefinitions
                 Field(nameof(Factory.FactoryName), "Factory Name", required: true),
                 Field(nameof(Factory.IndustryType), "Industry Type", required: true),
                 Field(nameof(Factory.TimeZone), "Time Zone"),
+                Field(nameof(Factory.TaxId), "Tax ID"),
+                Field(nameof(Factory.BranchCode), "Branch Code"),
                 Field(nameof(Factory.IsActive), "Active", MasterDataFieldType.Checkbox)
             ]),
         new(
@@ -73,6 +77,8 @@ public static class MasterDataDefinitions
                 Field(nameof(Customer.CustomerName), "Customer"),
                 Field(nameof(Customer.CustomerType), "Type"),
                 Field(nameof(Customer.ContactName), "Contact"),
+                Field(nameof(Customer.TaxId), "Tax ID"),
+                Field(nameof(Customer.BranchCode), "Branch"),
                 Field(nameof(Customer.IsActive), "Active", MasterDataFieldType.Checkbox)
             ],
             [
@@ -81,6 +87,8 @@ public static class MasterDataDefinitions
                 Field(nameof(Customer.CustomerType), "Customer Type"),
                 Field(nameof(Customer.ContactName), "Contact Name"),
                 Field(nameof(Customer.ContactEmail), "Contact Email"),
+                Field(nameof(Customer.TaxId), "Tax ID"),
+                Field(nameof(Customer.BranchCode), "Branch Code"),
                 Field(nameof(Customer.IsActive), "Active", MasterDataFieldType.Checkbox)
             ]),
         new(
@@ -127,6 +135,8 @@ public static class MasterDataDefinitions
                 Field(nameof(Carrier.CarrierName), "Carrier"),
                 Field(nameof(Carrier.CarrierType), "Type"),
                 Field(nameof(Carrier.SafetyRating), "Safety", MasterDataFieldType.Decimal),
+                Field(nameof(Carrier.TaxId), "Tax ID"),
+                Field(nameof(Carrier.BranchCode), "Branch"),
                 Field(nameof(Carrier.IsActive), "Active", MasterDataFieldType.Checkbox)
             ],
             [
@@ -136,6 +146,8 @@ public static class MasterDataDefinitions
                 Field(nameof(Carrier.ApiEnabled), "API Enabled", MasterDataFieldType.Checkbox),
                 Field(nameof(Carrier.EdiEnabled), "EDI Enabled", MasterDataFieldType.Checkbox),
                 Field(nameof(Carrier.SafetyRating), "Safety Rating", MasterDataFieldType.Decimal),
+                Field(nameof(Carrier.TaxId), "Tax ID"),
+                Field(nameof(Carrier.BranchCode), "Branch Code"),
                 Field(nameof(Carrier.IsActive), "Active", MasterDataFieldType.Checkbox)
             ]),
         new(

@@ -14,7 +14,7 @@ public sealed class OrderDetailViewModel(TransportOrderService orderService, Nav
     public string CustomerCode { get; private set; } = "...";
     public string FactoryName { get; private set; } = "Loading...";
     public string FactoryCode { get; private set; } = "...";
-    
+
     public string PickupName { get; private set; } = "Loading...";
     public string PickupCode { get; private set; } = "...";
     public string PickupAddress { get; private set; } = "...";
@@ -48,7 +48,7 @@ public sealed class OrderDetailViewModel(TransportOrderService orderService, Nav
                 FactoryCode = factory?.FactoryCode ?? "-";
 
                 var locations = await orderService.GetLocationsAsync();
-                
+
                 var pickup = locations.FirstOrDefault(l => l.LocationId == Order.PickupLocationId);
                 PickupName = pickup?.LocationName ?? "Unknown Location";
                 PickupCode = pickup?.LocationCode ?? "-";

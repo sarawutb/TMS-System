@@ -94,58 +94,50 @@ public abstract class CrudController<TEntity>(TmsDbContext dbContext) : TmsContr
 
     protected static IQueryable<TEntity> ApplySearchFilter(IQueryable<TEntity> query, string? search)
     {
-        if (string.IsNullOrWhiteSpace(search))
-        {
-            return query;
-        }
+        if (string.IsNullOrWhiteSpace(search)) return query;
+        var term = search.Trim().ToLower();
+        var param = Expression.Parameter(typeof(TEntity), "e");
+        // ponytail: use LINQ Aggregate to build search condition expression cleanly without verbose loops
+        var body = typeof(TEntity).GetProperties()
+            .Where(p => p.PropertyType == typeof(string))
+            .Select(p => Expression.Call(
+                Expression.Call(Expression.Property(param, p), nameof(string.ToLower), Type.EmptyTypes),
+                nameof(string.Contains),
+                Type.EmptyTypes,
+                Expression.Constant(term)
+            ))
+            .Aggregate<Expression, Expression?>(null, (acc, next) => acc == null ? next : Expression.OrElse(acc, next));
 
-        var normalizedSearch = search.Trim().ToLowerInvariant();
-        var parameter = Expression.Parameter(typeof(TEntity), "entity");
-        Expression? combined = null;
-
-        foreach (var property in typeof(TEntity).GetProperties().Where(property => property.PropertyType == typeof(string)))
-        {
-            var propertyAccess = Expression.Property(parameter, property);
-            var notNull = Expression.NotEqual(propertyAccess, Expression.Constant(null, typeof(string)));
-            var toLower = Expression.Call(propertyAccess, nameof(string.ToLower), Type.EmptyTypes);
-            var contains = Expression.Call(toLower, nameof(string.Contains), Type.EmptyTypes, Expression.Constant(normalizedSearch));
-            var condition = Expression.AndAlso(notNull, contains);
-            combined = combined is null ? condition : Expression.OrElse(combined, condition);
-        }
-
-        return combined is null ? query : query.Where(Expression.Lambda<Func<TEntity, bool>>(combined, parameter));
+        return body == null ? query : query.Where(Expression.Lambda<Func<TEntity, bool>>(body, param));
     }
 
     private IQueryable<TEntity> ApplyDefaultOrdering(IQueryable<TEntity> query)
     {
-        var key = dbContext.Model.FindEntityType(typeof(TEntity))?.FindPrimaryKey()?.Properties.SingleOrDefault();
-        if (key is null)
-        {
-            return query;
-        }
-
-        var parameter = Expression.Parameter(typeof(TEntity), "entity");
-        var property = Expression.Property(parameter, key.Name);
-        var lambda = Expression.Lambda(property, parameter);
-        var method = typeof(Queryable).GetMethods()
-            .Single(method => method.Name == nameof(Queryable.OrderBy)
-                && method.GetParameters().Length == 2)
-            .MakeGenericMethod(typeof(TEntity), property.Type);
-
-        return (IQueryable<TEntity>)method.Invoke(null, [query, lambda])!;
+        // ponytail: use native EF.Property dynamic ordering, avoiding reflection MakeGenericMethod
+        var keyName = dbContext.Model.FindEntityType(typeof(TEntity))?.FindPrimaryKey()?.Properties.FirstOrDefault()?.Name;
+        return keyName is null ? query : query.OrderBy(e => EF.Property<long>(e, keyName));
     }
 
     private long GetPrimaryKeyValue(TEntity entity)
     {
-        var key = dbContext.Model.FindEntityType(typeof(TEntity))?.FindPrimaryKey()?.Properties.SingleOrDefault() ?? throw new InvalidOperationException($"Primary key not configured for {typeof(TEntity).Name}.");
-        return Convert.ToInt64(typeof(TEntity).GetProperty(key.Name)?.GetValue(entity));
+        // ponytail: use EF Entry Metadata and Property API to avoid reflection GetValue
+        var keyName = dbContext.Entry(entity).Metadata.FindPrimaryKey()?.Properties.FirstOrDefault()?.Name;
+        return keyName is null ? throw new InvalidOperationException($"Primary key not configured for {typeof(TEntity).Name}.")
+            : Convert.ToInt64(dbContext.Entry(entity).Property(keyName).CurrentValue);
     }
+
     private void ApplyCreateAudit(TEntity entity)
     {
-        if (entity is not AuditableEntity auditable) return; auditable.IsActive = true; auditable.CreateDate = DateTime.UtcNow; if (string.IsNullOrWhiteSpace(auditable.CreateBy)) auditable.CreateBy = User.Identity?.Name ?? "api";
+        if (entity is not AuditableEntity a) return;
+        a.IsActive = true;
+        a.CreateDate = DateTime.UtcNow;
+        if (string.IsNullOrWhiteSpace(a.CreateBy)) a.CreateBy = User.Identity?.Name ?? "api";
     }
+
     private void ApplyReviseAudit(TEntity entity)
     {
-        if (entity is not AuditableEntity auditable) return; auditable.ReviseDate = DateTime.UtcNow; auditable.ReviseBy = User.Identity?.Name ?? "api";
+        if (entity is not AuditableEntity a) return;
+        a.ReviseDate = DateTime.UtcNow;
+        a.ReviseBy = User.Identity?.Name ?? "api";
     }
 }

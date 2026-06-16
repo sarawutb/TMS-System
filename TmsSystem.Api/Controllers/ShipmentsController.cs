@@ -9,78 +9,49 @@ namespace TmsSystem.Api.Controllers;
 
 [Route("api/shipment")]
 [Route("api/shipments")]
-public sealed class ShipmentsController : CrudController<Shipment>
+// ponytail: use C# 12 primary constructor and leverage the base controller's Context property to avoid redundant fields
+public sealed class ShipmentsController(TmsDbContext dbContext) : CrudController<Shipment>(dbContext)
 {
-    private readonly TmsDbContext dbContext;
-
-    public ShipmentsController(TmsDbContext dbContext) : base(dbContext)
-    {
-        this.dbContext = dbContext;
-    }
-
     protected override IQueryable<Shipment> ApplyPagedFilters(IQueryable<Shipment> query, string? search)
     {
         query = ApplySearchFilter(query, search);
-
         var status = Request.Query["status"].ToString();
-        if (!string.IsNullOrWhiteSpace(status))
-        {
-            query = query.Where(shipment => shipment.ShipmentStatus == status);
-        }
-
-        return query;
+        return string.IsNullOrWhiteSpace(status) ? query : query.Where(s => s.ShipmentStatus == status);
     }
 
     [HttpPost("{id:long}/status")]
     public async Task<IActionResult> UpdateStatus(long id, UpdateShipmentStatusRequestDto request, CancellationToken cancellationToken)
     {
-        var requestedStatus = request.Status.Trim();
-        if (!ShipmentStatusTransitionPolicy.IsKnownStatus(requestedStatus))
+        var reqStatus = request.Status.Trim();
+        if (!ShipmentStatusTransitionPolicy.IsKnownStatus(reqStatus))
         {
-            return ApiFailure<ShipmentStatusChangeResponseDto>(
-                StatusCodes.Status400BadRequest,
-                "Unknown shipment status.",
-                [$"Status must be one of: {string.Join(", ", ShipmentStatusTransitionPolicy.AllStatuses)}."]);
+            return ApiFailure<ShipmentStatusChangeResponseDto>(StatusCodes.Status400BadRequest, "Unknown shipment status.", [$"Status must be one of: {string.Join(", ", ShipmentStatusTransitionPolicy.AllStatuses)}."]);
         }
 
-        var shipment = await dbContext.Shipments.FirstOrDefaultAsync(x => x.ShipmentId == id, cancellationToken);
-        if (shipment is null)
+        var shipment = await Context.Shipments.FirstOrDefaultAsync(x => x.ShipmentId == id, cancellationToken);
+        if (shipment is null) return ApiFailure<ShipmentStatusChangeResponseDto>(StatusCodes.Status404NotFound, "Shipment not found.");
+
+        var prevStatus = shipment.ShipmentStatus;
+        if (!ShipmentStatusTransitionPolicy.CanTransition(prevStatus, reqStatus))
         {
-            return ApiFailure<ShipmentStatusChangeResponseDto>(StatusCodes.Status404NotFound, "Shipment not found.");
+            var allowed = ShipmentStatusTransitionPolicy.GetAllowedNextStatuses(prevStatus);
+            return ApiFailure<ShipmentStatusChangeResponseDto>(StatusCodes.Status409Conflict, $"Invalid shipment status transition from '{prevStatus}' to '{reqStatus}'.", [allowed.Count == 0 ? "No further transitions are allowed." : $"Allowed next statuses: {string.Join(", ", allowed)}."]);
         }
 
-        var previousStatus = shipment.ShipmentStatus;
-        if (!ShipmentStatusTransitionPolicy.CanTransition(previousStatus, requestedStatus))
+        if (string.Equals(prevStatus, reqStatus, StringComparison.OrdinalIgnoreCase))
         {
-            var allowed = ShipmentStatusTransitionPolicy.GetAllowedNextStatuses(previousStatus);
-            var allowedText = allowed.Count == 0 ? "No further transitions are allowed." : $"Allowed next statuses: {string.Join(", ", allowed)}.";
-
-            return ApiFailure<ShipmentStatusChangeResponseDto>(
-                StatusCodes.Status409Conflict,
-                $"Invalid shipment status transition from '{previousStatus}' to '{requestedStatus}'.",
-                [allowedText]);
+            return ApiSuccess(new ShipmentStatusChangeResponseDto { ShipmentId = shipment.ShipmentId, ShipmentNo = shipment.ShipmentNo, PreviousStatus = prevStatus, CurrentStatus = shipment.ShipmentStatus }, message: "Shipment status is already current.");
         }
 
-        if (string.Equals(previousStatus, requestedStatus, StringComparison.OrdinalIgnoreCase))
-        {
-            return ApiSuccess(new ShipmentStatusChangeResponseDto
-            {
-                ShipmentId = shipment.ShipmentId,
-                ShipmentNo = shipment.ShipmentNo,
-                PreviousStatus = previousStatus,
-                CurrentStatus = shipment.ShipmentStatus
-            }, message: "Shipment status is already current.");
-        }
-
-        shipment.ShipmentStatus = requestedStatus;
+        shipment.ShipmentStatus = reqStatus;
         shipment.ReviseDate = DateTime.UtcNow;
         shipment.ReviseBy = User.Identity?.Name ?? "api";
 
         var trackingEvent = new TrackingEvent
         {
             ShipmentId = shipment.ShipmentId,
-            EventCode = ToEventCode(requestedStatus),
-            EventName = $"Shipment status changed to {requestedStatus}",
+            EventCode = ToEventCode(reqStatus),
+            EventName = $"Shipment status changed to {reqStatus}",
             EventDate = request.EventDate ?? DateTime.UtcNow,
             Latitude = request.Latitude,
             Longitude = request.Longitude,
@@ -91,21 +62,12 @@ public sealed class ShipmentsController : CrudController<Shipment>
             CreateBy = User.Identity?.Name ?? "api"
         };
 
-        dbContext.TrackingEvents.Add(trackingEvent);
-        await dbContext.SaveChangesAsync(cancellationToken);
+        Context.TrackingEvents.Add(trackingEvent);
+        await Context.SaveChangesAsync(cancellationToken);
 
-        return ApiSuccess(new ShipmentStatusChangeResponseDto
-        {
-            ShipmentId = shipment.ShipmentId,
-            ShipmentNo = shipment.ShipmentNo,
-            PreviousStatus = previousStatus,
-            CurrentStatus = shipment.ShipmentStatus,
-            TrackingEventId = trackingEvent.TrackingEventId
-        }, message: "Shipment status updated.");
+        return ApiSuccess(new ShipmentStatusChangeResponseDto { ShipmentId = shipment.ShipmentId, ShipmentNo = shipment.ShipmentNo, PreviousStatus = prevStatus, CurrentStatus = shipment.ShipmentStatus, TrackingEventId = trackingEvent.TrackingEventId }, message: "Shipment status updated.");
     }
 
     private static string ToEventCode(string status)
-    {
-        return status.Replace(" ", "_", StringComparison.Ordinal).Replace("-", "_", StringComparison.Ordinal).ToUpperInvariant();
-    }
+        => status.Replace(" ", "_", StringComparison.Ordinal).Replace("-", "_", StringComparison.Ordinal).ToUpperInvariant();
 }

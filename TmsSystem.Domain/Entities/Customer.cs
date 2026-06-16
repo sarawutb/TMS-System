@@ -10,4 +10,6 @@ public sealed class Customer : AuditableEntity
     public string? CustomerType { get; set; }
     public string? ContactName { get; set; }
     public string? ContactEmail { get; set; }
+    public string? TaxId { get; set; }
+    public string BranchCode { get; set; } = "00000";
 }

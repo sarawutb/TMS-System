@@ -10,13 +10,9 @@ public sealed class DistrictsController(TmsDbContext dbContext) : CrudController
 {
     [HttpGet("by-province/{provinceId:long}")]
     public async Task<IActionResult> GetByProvince(long provinceId, CancellationToken cancellationToken)
-    {
-        var districts = await Context.Districts
+        => ApiSuccess(await Context.Districts
             .AsNoTracking()
-            .Where(district => district.ProvinceId == provinceId)
-            .OrderBy(district => district.DistrictNameTh)
-            .ToListAsync(cancellationToken);
-
-        return ApiSuccess(districts);
-    }
+            .Where(d => d.ProvinceId == provinceId)
+            .OrderBy(d => d.DistrictNameTh)
+            .ToListAsync(cancellationToken));
 }

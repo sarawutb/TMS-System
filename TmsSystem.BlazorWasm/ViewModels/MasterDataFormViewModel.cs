@@ -116,6 +116,7 @@ public sealed class MasterDataFormViewModel(MasterDataService masterDataService,
 
     public async Task SaveAsync(long? id)
     {
+        DefaultBranchCode();
         ErrorMessage = Validate();
         if (!string.IsNullOrWhiteSpace(ErrorMessage))
         {
@@ -152,6 +153,15 @@ public sealed class MasterDataFormViewModel(MasterDataService masterDataService,
         }
 
         return null;
+    }
+
+    private void DefaultBranchCode()
+    {
+        if (SelectedDefinition.FormFields.Any(field => field.Name == nameof(Factory.BranchCode)) &&
+            string.IsNullOrWhiteSpace(GetRawValue(nameof(Factory.BranchCode))?.ToString()))
+        {
+            SetRawValue(nameof(Factory.BranchCode), "00000");
+        }
     }
 
     private async Task LoadLookupsAsync()
