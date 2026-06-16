@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations.Schema;
 using TmsSystem.Domain.Common;
 
 namespace TmsSystem.Domain.Entities;
@@ -7,7 +8,11 @@ public sealed class Location : AuditableEntity
     public long LocationId { get; set; }
     public long? FactoryId { get; set; }
     public string LocationCode { get; set; } = string.Empty;
-    public string LocationName { get; set; } = string.Empty;
+    public string LocationNameTh { get; set; } = string.Empty;
+    public string? LocationNameEn { get; set; }
+    public string? LocationNameShort { get; set; }
+    [NotMapped]
+    public string LocationName => string.IsNullOrWhiteSpace(LocationNameShort) ? LocationNameTh : LocationNameShort;
     public string LocationType { get; set; } = string.Empty;
     public string? AddressText { get; set; }
     public long? SubDistrictId { get; set; }

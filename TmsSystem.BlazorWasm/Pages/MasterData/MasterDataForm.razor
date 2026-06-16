@@ -83,6 +83,14 @@
                                            value="@ViewModel.GetFieldText(field)"
                                            @onchange="async e => await ViewModel.SetFieldValueAsync(field, e.Value?.ToString())" />
                                 }
+                                else if (field.FieldType == MasterDataFieldType.Textarea)
+                                {
+                                    <textarea class="form-control"
+                                              rows="3"
+                                              style="border-radius: 6px;"
+                                              value="@ViewModel.GetFieldText(field)"
+                                              @onchange="async e => await ViewModel.SetFieldValueAsync(field, e.Value?.ToString())"></textarea>
+                                }
                                 else
                                 {
                                     <input type="text"

@@ -7,7 +7,8 @@ public enum MasterDataFieldType
     Text,
     Decimal,
     Checkbox,
-    Select
+    Select,
+    Textarea
 }
 
 public sealed record SelectOption(string Value, string Label);
@@ -56,7 +57,9 @@ public static class MasterDataDefinitions
             ],
             [
                 Field(nameof(Factory.FactoryCode), "Factory Code", required: true),
-                Field(nameof(Factory.FactoryName), "Factory Name", required: true),
+                Field(nameof(Factory.FactoryNameTh), "Thai Name", required: true),
+                Field(nameof(Factory.FactoryNameEn), "English Name"),
+                Field(nameof(Factory.FactoryNameShort), "Short Name"),
                 Field(nameof(Factory.IndustryType), "Industry Type", required: true),
                 Field(nameof(Factory.TimeZone), "Time Zone"),
                 Field(nameof(Factory.TaxId), "Tax ID"),
@@ -79,16 +82,23 @@ public static class MasterDataDefinitions
                 Field(nameof(Customer.ContactName), "Contact"),
                 Field(nameof(Customer.TaxId), "Tax ID"),
                 Field(nameof(Customer.BranchCode), "Branch"),
+                Field(nameof(Customer.ProvinceId), "Province", MasterDataFieldType.Select, lookupKey: "provinces"),
                 Field(nameof(Customer.IsActive), "Active", MasterDataFieldType.Checkbox)
             ],
             [
                 Field(nameof(Customer.CustomerCode), "Customer Code", required: true),
-                Field(nameof(Customer.CustomerName), "Customer Name", required: true),
+                Field(nameof(Customer.CustomerNameTh), "Thai Name", required: true),
+                Field(nameof(Customer.CustomerNameEn), "English Name"),
+                Field(nameof(Customer.CustomerNameShort), "Short Name"),
                 Field(nameof(Customer.CustomerType), "Customer Type"),
                 Field(nameof(Customer.ContactName), "Contact Name"),
                 Field(nameof(Customer.ContactEmail), "Contact Email"),
                 Field(nameof(Customer.TaxId), "Tax ID"),
                 Field(nameof(Customer.BranchCode), "Branch Code"),
+                Field(nameof(Customer.AddressText), "Address", MasterDataFieldType.Textarea),
+                Field(nameof(Customer.ProvinceId), "Province", MasterDataFieldType.Select, lookupKey: "provinces"),
+                Field(nameof(Customer.DistrictId), "District", MasterDataFieldType.Select, lookupKey: "districts"),
+                Field(nameof(Customer.SubDistrictId), "Sub-District", MasterDataFieldType.Select, lookupKey: "subdistricts"),
                 Field(nameof(Customer.IsActive), "Active", MasterDataFieldType.Checkbox)
             ]),
         new(
@@ -110,9 +120,11 @@ public static class MasterDataDefinitions
             [
                 Field(nameof(Location.FactoryId), "Factory", MasterDataFieldType.Select, lookupKey: "factories"),
                 Field(nameof(Location.LocationCode), "Location Code", required: true),
-                Field(nameof(Location.LocationName), "Location Name", required: true),
+                Field(nameof(Location.LocationNameTh), "Thai Name", required: true),
+                Field(nameof(Location.LocationNameEn), "English Name"),
+                Field(nameof(Location.LocationNameShort), "Short Name"),
                 Field(nameof(Location.LocationType), "Location Type", MasterDataFieldType.Select, required: true, staticOptions: Options("Factory", "Warehouse", "Customer", "Port", "Cross Dock", "Other")),
-                Field(nameof(Location.AddressText), "Address"),
+                Field(nameof(Location.AddressText), "Address", MasterDataFieldType.Textarea),
                 Field(nameof(Location.ProvinceId), "Province", MasterDataFieldType.Select, lookupKey: "provinces"),
                 Field(nameof(Location.DistrictId), "District", MasterDataFieldType.Select, lookupKey: "districts"),
                 Field(nameof(Location.SubDistrictId), "Sub-District", MasterDataFieldType.Select, lookupKey: "subdistricts"),
@@ -141,7 +153,9 @@ public static class MasterDataDefinitions
             ],
             [
                 Field(nameof(Carrier.CarrierCode), "Carrier Code", required: true),
-                Field(nameof(Carrier.CarrierName), "Carrier Name", required: true),
+                Field(nameof(Carrier.CarrierNameTh), "Thai Name", required: true),
+                Field(nameof(Carrier.CarrierNameEn), "English Name"),
+                Field(nameof(Carrier.CarrierNameShort), "Short Name"),
                 Field(nameof(Carrier.CarrierType), "Carrier Type", MasterDataFieldType.Select, staticOptions: Options("3PL", "Dedicated", "Spot", "Internal")),
                 Field(nameof(Carrier.ApiEnabled), "API Enabled", MasterDataFieldType.Checkbox),
                 Field(nameof(Carrier.EdiEnabled), "EDI Enabled", MasterDataFieldType.Checkbox),

@@ -175,7 +175,7 @@ public sealed class MasterDataFormViewModel(MasterDataService masterDataService,
 
     private async Task RefreshDependentLookupsAsync()
     {
-        if (SelectedDefinition.Key != "locations")
+        if (SelectedDefinition.Key is not ("locations" or "customers"))
         {
             return;
         }
@@ -196,7 +196,7 @@ public sealed class MasterDataFormViewModel(MasterDataService masterDataService,
 
     private async Task HandleDependentFieldChangeAsync(string fieldName)
     {
-        if (SelectedDefinition.Key != "locations")
+        if (SelectedDefinition.Key is not ("locations" or "customers"))
         {
             return;
         }

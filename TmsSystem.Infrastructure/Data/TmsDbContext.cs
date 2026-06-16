@@ -50,7 +50,9 @@ public sealed class TmsDbContext(DbContextOptions<TmsDbContext> options) : DbCon
             entity.ToTable("mst_factory");
             entity.HasKey(x => x.FactoryId);
             entity.Property(x => x.FactoryCode).HasMaxLength(50).IsRequired();
-            entity.Property(x => x.FactoryName).HasMaxLength(200).IsRequired();
+            entity.Property(x => x.FactoryNameTh).HasMaxLength(200).IsRequired();
+            entity.Property(x => x.FactoryNameEn).HasMaxLength(200);
+            entity.Property(x => x.FactoryNameShort).HasMaxLength(50);
             entity.Property(x => x.IndustryType).HasMaxLength(50).IsRequired();
             entity.Property(x => x.TimeZone).HasMaxLength(100);
             entity.Property(x => x.TaxId).HasMaxLength(13);
@@ -63,12 +65,18 @@ public sealed class TmsDbContext(DbContextOptions<TmsDbContext> options) : DbCon
             entity.ToTable("mst_customer");
             entity.HasKey(x => x.CustomerId);
             entity.Property(x => x.CustomerCode).HasMaxLength(50).IsRequired();
-            entity.Property(x => x.CustomerName).HasMaxLength(200).IsRequired();
+            entity.Property(x => x.CustomerNameTh).HasMaxLength(200).IsRequired();
+            entity.Property(x => x.CustomerNameEn).HasMaxLength(200);
+            entity.Property(x => x.CustomerNameShort).HasMaxLength(50);
             entity.Property(x => x.CustomerType).HasMaxLength(50);
             entity.Property(x => x.ContactName).HasMaxLength(150);
             entity.Property(x => x.ContactEmail).HasMaxLength(150);
             entity.Property(x => x.TaxId).HasMaxLength(13);
             entity.Property(x => x.BranchCode).HasMaxLength(5).HasDefaultValue("00000");
+            entity.Property(x => x.AddressText).HasMaxLength(500);
+            entity.HasOne(x => x.Province).WithMany().HasForeignKey(x => x.ProvinceId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(x => x.District).WithMany().HasForeignKey(x => x.DistrictId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(x => x.SubDistrict).WithMany().HasForeignKey(x => x.SubDistrictId).OnDelete(DeleteBehavior.Restrict);
             entity.HasIndex(x => x.CustomerCode).HasDatabaseName("UX_mst_customer_CustomerCode").IsUnique();
         });
 
@@ -110,7 +118,9 @@ public sealed class TmsDbContext(DbContextOptions<TmsDbContext> options) : DbCon
             entity.ToTable("mst_location");
             entity.HasKey(x => x.LocationId);
             entity.Property(x => x.LocationCode).HasMaxLength(50).IsRequired();
-            entity.Property(x => x.LocationName).HasMaxLength(200).IsRequired();
+            entity.Property(x => x.LocationNameTh).HasMaxLength(200).IsRequired();
+            entity.Property(x => x.LocationNameEn).HasMaxLength(200);
+            entity.Property(x => x.LocationNameShort).HasMaxLength(50);
             entity.Property(x => x.LocationType).HasMaxLength(50).IsRequired();
             entity.Property(x => x.AddressText).HasMaxLength(500);
             entity.Property(x => x.Latitude).HasPrecision(10, 7);
@@ -128,7 +138,9 @@ public sealed class TmsDbContext(DbContextOptions<TmsDbContext> options) : DbCon
             entity.ToTable("mst_carrier");
             entity.HasKey(x => x.CarrierId);
             entity.Property(x => x.CarrierCode).HasMaxLength(50).IsRequired();
-            entity.Property(x => x.CarrierName).HasMaxLength(200).IsRequired();
+            entity.Property(x => x.CarrierNameTh).HasMaxLength(200).IsRequired();
+            entity.Property(x => x.CarrierNameEn).HasMaxLength(200);
+            entity.Property(x => x.CarrierNameShort).HasMaxLength(50);
             entity.Property(x => x.CarrierType).HasMaxLength(50);
             entity.Property(x => x.SafetyRating).HasPrecision(5, 2);
             entity.Property(x => x.TaxId).HasMaxLength(13);

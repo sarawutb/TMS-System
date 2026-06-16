@@ -90,16 +90,24 @@ public abstract class CrudController<TEntity>(TmsDbContext dbContext) : TmsContr
     }
 
     protected virtual IQueryable<TEntity> ApplyPagedFilters(IQueryable<TEntity> query, string? search)
-        => ApplySearchFilter(query, search);
+    {
+        var mappedStrings = dbContext.Model.FindEntityType(typeof(TEntity))?
+            .GetProperties()
+            .Where(p => p.ClrType == typeof(string))
+            .Select(p => p.Name)
+            .ToHashSet();
 
-    protected static IQueryable<TEntity> ApplySearchFilter(IQueryable<TEntity> query, string? search)
+        return ApplySearchFilter(query, search, mappedStrings);
+    }
+
+    protected static IQueryable<TEntity> ApplySearchFilter(IQueryable<TEntity> query, string? search, ISet<string>? propertyNames = null)
     {
         if (string.IsNullOrWhiteSpace(search)) return query;
         var term = search.Trim().ToLower();
         var param = Expression.Parameter(typeof(TEntity), "e");
         // ponytail: use LINQ Aggregate to build search condition expression cleanly without verbose loops
         var body = typeof(TEntity).GetProperties()
-            .Where(p => p.PropertyType == typeof(string))
+            .Where(p => p.PropertyType == typeof(string) && (propertyNames is null || propertyNames.Contains(p.Name)))
             .Select(p => Expression.Call(
                 Expression.Call(Expression.Property(param, p), nameof(string.ToLower), Type.EmptyTypes),
                 nameof(string.Contains),
