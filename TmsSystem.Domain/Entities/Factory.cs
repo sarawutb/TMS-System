@@ -15,6 +15,6 @@ public sealed class Factory : AuditableEntity
     public string IndustryType { get; set; } = string.Empty;
     public string? TimeZone { get; set; }
     public string? TaxId { get; set; }
-    public string BranchCode { get; set; } = "00000";
+    public string? BranchCode { get; set; } = "00000";
     public ICollection<Location> Locations { get; set; } = new List<Location>();
 }

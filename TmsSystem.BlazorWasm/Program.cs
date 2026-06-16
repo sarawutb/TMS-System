@@ -6,7 +6,6 @@ using TmsSystem.BlazorWasm.Services;
 using TmsSystem.BlazorWasm.ViewModels;
 public static class Program
 {
-    public static IServiceProvider ServiceProvider { get; private set; }
     public static async Task Main(string[] args)
     {
         var builder = WebAssemblyHostBuilder.CreateDefault(args);
@@ -52,8 +51,6 @@ public static class Program
 #if DEBUG
         builder.Logging.SetMinimumLevel(LogLevel.Debug);
 #endif
-        ServiceProvider = builder.Services.BuildServiceProvider();
-
         await builder.Build().RunAsync();
     }
 }

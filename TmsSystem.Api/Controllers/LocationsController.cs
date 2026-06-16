@@ -13,6 +13,6 @@ public sealed class LocationsController(TmsDbContext dbContext) : CrudController
         => ApiSuccess(await Context.Locations
             .AsNoTracking()
             .Where(l => l.FactoryId == factoryId)
-            .OrderBy(l => l.LocationName)
+            .OrderBy(l => l.LocationNameTh)
             .ToListAsync(cancellationToken));
 }

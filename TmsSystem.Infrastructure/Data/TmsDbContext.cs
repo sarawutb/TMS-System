@@ -56,7 +56,7 @@ public sealed class TmsDbContext(DbContextOptions<TmsDbContext> options) : DbCon
             entity.Property(x => x.IndustryType).HasMaxLength(50).IsRequired();
             entity.Property(x => x.TimeZone).HasMaxLength(100);
             entity.Property(x => x.TaxId).HasMaxLength(13);
-            entity.Property(x => x.BranchCode).HasMaxLength(5).HasDefaultValue("00000");
+            entity.Property(x => x.BranchCode).HasMaxLength(5).HasDefaultValue("00000").IsRequired(false);
             entity.HasIndex(x => x.FactoryCode).HasDatabaseName("UX_mst_factory_FactoryCode").IsUnique();
         });
 
@@ -72,7 +72,7 @@ public sealed class TmsDbContext(DbContextOptions<TmsDbContext> options) : DbCon
             entity.Property(x => x.ContactName).HasMaxLength(150);
             entity.Property(x => x.ContactEmail).HasMaxLength(150);
             entity.Property(x => x.TaxId).HasMaxLength(13);
-            entity.Property(x => x.BranchCode).HasMaxLength(5).HasDefaultValue("00000");
+            entity.Property(x => x.BranchCode).HasMaxLength(5).HasDefaultValue("00000").IsRequired(false);
             entity.Property(x => x.AddressText).HasMaxLength(500);
             entity.HasOne(x => x.Province).WithMany().HasForeignKey(x => x.ProvinceId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(x => x.District).WithMany().HasForeignKey(x => x.DistrictId).OnDelete(DeleteBehavior.Restrict);
@@ -144,7 +144,7 @@ public sealed class TmsDbContext(DbContextOptions<TmsDbContext> options) : DbCon
             entity.Property(x => x.CarrierType).HasMaxLength(50);
             entity.Property(x => x.SafetyRating).HasPrecision(5, 2);
             entity.Property(x => x.TaxId).HasMaxLength(13);
-            entity.Property(x => x.BranchCode).HasMaxLength(5).HasDefaultValue("00000");
+            entity.Property(x => x.BranchCode).HasMaxLength(5).HasDefaultValue("00000").IsRequired(false);
             entity.HasIndex(x => x.CarrierCode).HasDatabaseName("UX_mst_carrier_CarrierCode").IsUnique();
         });
 

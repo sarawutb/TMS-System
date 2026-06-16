@@ -17,7 +17,7 @@ public sealed class Carrier : AuditableEntity
     public bool EdiEnabled { get; set; }
     public decimal? SafetyRating { get; set; }
     public string? TaxId { get; set; }
-    public string BranchCode { get; set; } = "00000";
+    public string? BranchCode { get; set; } = "00000";
     public ICollection<Vehicle> Vehicles { get; set; } = new List<Vehicle>();
     public ICollection<Driver> Drivers { get; set; } = new List<Driver>();
 }

@@ -19,8 +19,6 @@ public sealed class LoginViewModel(
     [Required(ErrorMessage = "Password is required.")]
     public string Password { get; set; } = string.Empty;
 
-    public string? ErrorMessage { get; set; }
-
     public bool IsLoggingIn { get => IsLoading; set => IsLoading = value; }
 
     public async Task HandleLoginAsync()
