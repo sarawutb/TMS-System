@@ -50,7 +50,7 @@ public static class MasterDataDefinitions
             [
                 Field(nameof(Factory.FactoryCode), "Code"),
                 Field(nameof(Factory.FactoryName), "Factory"),
-                Field(nameof(Factory.IndustryType), "Industry"),
+                Field(nameof(Factory.IndustryProfileId), "Industry", MasterDataFieldType.Decimal),
                 Field(nameof(Factory.TimeZone), "Time Zone"),
                 Field(nameof(Factory.TaxId), "Tax ID"),
                 Field(nameof(Factory.BranchCode), "Branch"),
@@ -61,7 +61,7 @@ public static class MasterDataDefinitions
                 Field(nameof(Factory.FactoryNameTh), "Thai Name", required: true),
                 Field(nameof(Factory.FactoryNameEn), "English Name"),
                 Field(nameof(Factory.FactoryNameShort), "Short Name"),
-                Field(nameof(Factory.IndustryType), "Industry Type", required: true),
+                Field(nameof(Factory.IndustryProfileId), "Industry Profile", MasterDataFieldType.Decimal, required: true),
                 Field(nameof(Factory.TimeZone), "Time Zone"),
                 Field(nameof(Factory.TaxId), "Tax ID"),
                 Field(nameof(Factory.BranchCode), "Branch Code"),
@@ -79,7 +79,7 @@ public static class MasterDataDefinitions
             [
                 Field(nameof(Customer.CustomerCode), "Code"),
                 Field(nameof(Customer.CustomerName), "Customer"),
-                Field(nameof(Customer.CustomerType), "Type"),
+                Field(nameof(Customer.CustomerProfileId), "Profile", MasterDataFieldType.Decimal),
                 Field(nameof(Customer.ContactName), "Contact"),
                 Field(nameof(Customer.TaxId), "Tax ID"),
                 Field(nameof(Customer.BranchCode), "Branch"),
@@ -91,7 +91,7 @@ public static class MasterDataDefinitions
                 Field(nameof(Customer.CustomerNameTh), "Thai Name", required: true),
                 Field(nameof(Customer.CustomerNameEn), "English Name"),
                 Field(nameof(Customer.CustomerNameShort), "Short Name"),
-                Field(nameof(Customer.CustomerType), "Customer Type"),
+                Field(nameof(Customer.CustomerProfileId), "Customer Profile", MasterDataFieldType.Decimal),
                 Field(nameof(Customer.ContactName), "Contact Name"),
                 Field(nameof(Customer.ContactEmail), "Contact Email"),
                 Field(nameof(Customer.TaxId), "Tax ID"),
@@ -114,7 +114,7 @@ public static class MasterDataDefinitions
             [
                 Field(nameof(Location.LocationCode), "Code"),
                 Field(nameof(Location.LocationName), "Location"),
-                Field(nameof(Location.LocationType), "Type"),
+                Field(nameof(Location.LocationProfileId), "Profile", MasterDataFieldType.Decimal),
                 Field(nameof(Location.FactoryId), "Factory", MasterDataFieldType.Select, lookupKey: "factories"),
                 Field(nameof(Location.IsActive), "Active", MasterDataFieldType.Checkbox)
             ],
@@ -124,7 +124,7 @@ public static class MasterDataDefinitions
                 Field(nameof(Location.LocationNameTh), "Thai Name", required: true),
                 Field(nameof(Location.LocationNameEn), "English Name"),
                 Field(nameof(Location.LocationNameShort), "Short Name"),
-                Field(nameof(Location.LocationType), "Location Type", MasterDataFieldType.Select, required: true, staticOptions: Options("Factory", "Warehouse", "Customer", "Port", "Cross Dock", "Other")),
+                Field(nameof(Location.LocationProfileId), "Location Profile", MasterDataFieldType.Decimal, required: true),
                 Field(nameof(Location.AddressText), "Address", MasterDataFieldType.Textarea),
                 Field(nameof(Location.ProvinceId), "Province", MasterDataFieldType.Select, lookupKey: "provinces"),
                 Field(nameof(Location.DistrictId), "District", MasterDataFieldType.Select, lookupKey: "districts"),
@@ -146,7 +146,7 @@ public static class MasterDataDefinitions
             [
                 Field(nameof(Carrier.CarrierCode), "Code"),
                 Field(nameof(Carrier.CarrierName), "Carrier"),
-                Field(nameof(Carrier.CarrierType), "Type"),
+                Field(nameof(Carrier.CarrierProfileId), "Profile", MasterDataFieldType.Decimal),
                 Field(nameof(Carrier.SafetyRating), "Safety", MasterDataFieldType.Decimal),
                 Field(nameof(Carrier.TaxId), "Tax ID"),
                 Field(nameof(Carrier.BranchCode), "Branch"),
@@ -157,7 +157,7 @@ public static class MasterDataDefinitions
                 Field(nameof(Carrier.CarrierNameTh), "Thai Name", required: true),
                 Field(nameof(Carrier.CarrierNameEn), "English Name"),
                 Field(nameof(Carrier.CarrierNameShort), "Short Name"),
-                Field(nameof(Carrier.CarrierType), "Carrier Type", MasterDataFieldType.Select, staticOptions: Options("3PL", "Dedicated", "Spot", "Internal")),
+                Field(nameof(Carrier.CarrierProfileId), "Carrier Profile", MasterDataFieldType.Decimal),
                 Field(nameof(Carrier.ApiEnabled), "API Enabled", MasterDataFieldType.Checkbox),
                 Field(nameof(Carrier.EdiEnabled), "EDI Enabled", MasterDataFieldType.Checkbox),
                 Field(nameof(Carrier.SafetyRating), "Safety Rating", MasterDataFieldType.Decimal),
@@ -176,14 +176,14 @@ public static class MasterDataDefinitions
             nameof(Vehicle.VehicleNo),
             [
                 Field(nameof(Vehicle.VehicleNo), "Vehicle No"),
-                Field(nameof(Vehicle.VehicleType), "Type"),
+                Field(nameof(Vehicle.VehicleProfileId), "Profile", MasterDataFieldType.Decimal),
                 Field(nameof(Vehicle.CarrierId), "Carrier", MasterDataFieldType.Select, lookupKey: "carriers"),
                 Field(nameof(Vehicle.TemperatureControlled), "Cold Chain", MasterDataFieldType.Checkbox),
                 Field(nameof(Vehicle.IsActive), "Active", MasterDataFieldType.Checkbox)
             ],
             [
                 Field(nameof(Vehicle.VehicleNo), "Vehicle No", required: true),
-                Field(nameof(Vehicle.VehicleType), "Vehicle Type", MasterDataFieldType.Select, required: true, staticOptions: Options("4W", "6W", "10W", "Trailer", "Container", "Van")),
+                Field(nameof(Vehicle.VehicleProfileId), "Vehicle Profile", MasterDataFieldType.Decimal, required: true),
                 Field(nameof(Vehicle.CarrierId), "Carrier", MasterDataFieldType.Select, lookupKey: "carriers"),
                 Field(nameof(Vehicle.CapacityWeightKg), "Capacity Weight (kg)", MasterDataFieldType.Decimal),
                 Field(nameof(Vehicle.CapacityVolumeM3), "Capacity Volume (m3)", MasterDataFieldType.Decimal),
@@ -213,6 +213,133 @@ public static class MasterDataDefinitions
                 Field(nameof(Driver.MobileNo), "Mobile No"),
                 Field(nameof(Driver.LicenseNo), "License No"),
                 Field(nameof(Driver.IsActive), "Active", MasterDataFieldType.Checkbox)
+            ]),new(
+            "product-profiles",
+            "Product Profiles",
+            "Top-level product profile master",
+            "bi bi-diagram-2",
+            "api/product-profile",
+            typeof(ProductProfile),
+            nameof(ProductProfile.ProductProfileId),
+            nameof(ProductProfile.ProductProfileName),
+            [
+                Field(nameof(ProductProfile.ProductProfileCode), "Code"),
+                Field(nameof(ProductProfile.ProductProfileName), "Profile"),
+                Field(nameof(ProductProfile.IsActive), "Active", MasterDataFieldType.Checkbox)
+            ],
+            [
+                Field(nameof(ProductProfile.ProductProfileCode), "Profile Code", required: true),
+                Field(nameof(ProductProfile.ProductProfileNameTh), "Thai Name", required: true),
+                Field(nameof(ProductProfile.ProductProfileNameEn), "English Name"),
+                Field(nameof(ProductProfile.ProductProfileNameShort), "Short Name"),
+                Field(nameof(ProductProfile.Description), "Description", MasterDataFieldType.Textarea),
+                Field(nameof(ProductProfile.IsActive), "Active", MasterDataFieldType.Checkbox)
+            ]),
+        new(
+            "product-groups",
+            "Product Groups",
+            "Product groups under a product profile",
+            "bi bi-layers",
+            "api/product-group",
+            typeof(ProductGroup),
+            nameof(ProductGroup.ProductGroupId),
+            nameof(ProductGroup.ProductGroupName),
+            [
+                Field(nameof(ProductGroup.ProductProfileId), "Profile", MasterDataFieldType.Select, lookupKey: "product-profiles"),
+                Field(nameof(ProductGroup.ProductGroupCode), "Code"),
+                Field(nameof(ProductGroup.ProductGroupName), "Group"),
+                Field(nameof(ProductGroup.IsActive), "Active", MasterDataFieldType.Checkbox)
+            ],
+            [
+                Field(nameof(ProductGroup.ProductProfileId), "Product Profile", MasterDataFieldType.Select, required: true, lookupKey: "product-profiles"),
+                Field(nameof(ProductGroup.ProductGroupCode), "Group Code", required: true),
+                Field(nameof(ProductGroup.ProductGroupNameTh), "Thai Name", required: true),
+                Field(nameof(ProductGroup.ProductGroupNameEn), "English Name"),
+                Field(nameof(ProductGroup.ProductGroupNameShort), "Short Name"),
+                Field(nameof(ProductGroup.Description), "Description", MasterDataFieldType.Textarea),
+                Field(nameof(ProductGroup.IsActive), "Active", MasterDataFieldType.Checkbox)
+            ]),
+        new(
+            "product-categories",
+            "Product Categories",
+            "Product categories under a product group",
+            "bi bi-boxes",
+            "api/product-category",
+            typeof(ProductCategory),
+            nameof(ProductCategory.ProductCategoryId),
+            nameof(ProductCategory.ProductCategoryName),
+            [
+                Field(nameof(ProductCategory.ProductGroupId), "Group", MasterDataFieldType.Select, lookupKey: "product-groups"),
+                Field(nameof(ProductCategory.ProductCategoryCode), "Code"),
+                Field(nameof(ProductCategory.ProductCategoryName), "Category"),
+                Field(nameof(ProductCategory.IsActive), "Active", MasterDataFieldType.Checkbox)
+            ],
+            [
+                Field(nameof(ProductCategory.ProductGroupId), "Product Group", MasterDataFieldType.Select, required: true, lookupKey: "product-groups"),
+                Field(nameof(ProductCategory.ProductCategoryCode), "Category Code", required: true),
+                Field(nameof(ProductCategory.ProductCategoryNameTh), "Thai Name", required: true),
+                Field(nameof(ProductCategory.ProductCategoryNameEn), "English Name"),
+                Field(nameof(ProductCategory.ProductCategoryNameShort), "Short Name"),
+                Field(nameof(ProductCategory.Description), "Description", MasterDataFieldType.Textarea),
+                Field(nameof(ProductCategory.IsActive), "Active", MasterDataFieldType.Checkbox)
+            ]),
+        new(
+            "units",
+            "Units",
+            "Unit of measure master",
+            "bi bi-rulers",
+            "api/unit",
+            typeof(Unit),
+            nameof(Unit.UnitId),
+            nameof(Unit.UnitName),
+            [
+                Field(nameof(Unit.UnitCode), "Code"),
+                Field(nameof(Unit.UnitName), "Unit"),
+                Field(nameof(Unit.UnitSymbol), "Symbol"),
+                Field(nameof(Unit.UnitProfileId), "Profile", MasterDataFieldType.Decimal),
+                Field(nameof(Unit.IsActive), "Active", MasterDataFieldType.Checkbox)
+            ],
+            [
+                Field(nameof(Unit.UnitCode), "Unit Code", required: true),
+                Field(nameof(Unit.UnitNameTh), "Thai Name", required: true),
+                Field(nameof(Unit.UnitNameEn), "English Name"),
+                Field(nameof(Unit.UnitNameShort), "Short Name"),
+                Field(nameof(Unit.UnitSymbol), "Symbol"),
+                Field(nameof(Unit.UnitProfileId), "Unit Profile", MasterDataFieldType.Decimal),
+                Field(nameof(Unit.DecimalPrecision), "Decimal Precision", MasterDataFieldType.Decimal),
+                Field(nameof(Unit.IsActive), "Active", MasterDataFieldType.Checkbox)
+            ]),
+        new(
+            "product-units",
+            "Product Units",
+            "Product unit conversion and default order/transport units",
+            "bi bi-box-arrow-in-right",
+            "api/product-unit",
+            typeof(ProductUnit),
+            nameof(ProductUnit.ProductUnitId),
+            nameof(ProductUnit.UnitRole),
+            [
+                Field(nameof(ProductUnit.ProductId), "Product", MasterDataFieldType.Select, lookupKey: "products"),
+                Field(nameof(ProductUnit.UnitId), "Unit", MasterDataFieldType.Select, lookupKey: "units"),
+                Field(nameof(ProductUnit.UnitRole), "Role"),
+                Field(nameof(ProductUnit.ConversionQtyToBase), "Conversion", MasterDataFieldType.Decimal),
+                Field(nameof(ProductUnit.IsActive), "Active", MasterDataFieldType.Checkbox)
+            ],
+            [
+                Field(nameof(ProductUnit.ProductId), "Product", MasterDataFieldType.Select, required: true, lookupKey: "products"),
+                Field(nameof(ProductUnit.UnitId), "Unit", MasterDataFieldType.Select, required: true, lookupKey: "units"),
+                Field(nameof(ProductUnit.UnitRole), "Unit Role", MasterDataFieldType.Select, staticOptions: Options("BASE", "STOCK", "ORDER", "TRANSPORT", "BILLING")),
+                Field(nameof(ProductUnit.ConversionQtyToBase), "Conversion to Base", MasterDataFieldType.Decimal, required: true),
+                Field(nameof(ProductUnit.NetWeightKg), "Net Weight (kg)", MasterDataFieldType.Decimal),
+                Field(nameof(ProductUnit.GrossWeightKg), "Gross Weight (kg)", MasterDataFieldType.Decimal),
+                Field(nameof(ProductUnit.VolumeCbm), "Volume (cbm)", MasterDataFieldType.Decimal),
+                Field(nameof(ProductUnit.LengthCm), "Length (cm)", MasterDataFieldType.Decimal),
+                Field(nameof(ProductUnit.WidthCm), "Width (cm)", MasterDataFieldType.Decimal),
+                Field(nameof(ProductUnit.HeightCm), "Height (cm)", MasterDataFieldType.Decimal),
+                Field(nameof(ProductUnit.Barcode), "Barcode"),
+                Field(nameof(ProductUnit.IsDefaultOrderUnit), "Default Order", MasterDataFieldType.Checkbox),
+                Field(nameof(ProductUnit.IsDefaultTransportUnit), "Default Transport", MasterDataFieldType.Checkbox),
+                Field(nameof(ProductUnit.IsActive), "Active", MasterDataFieldType.Checkbox)
             ]),
         new(
             "vehicle-maintenance",
@@ -225,14 +352,14 @@ public static class MasterDataDefinitions
             nameof(VehicleMaintenance.MaintenanceType),
             [
                 Field(nameof(VehicleMaintenance.VehicleId), "Vehicle", MasterDataFieldType.Select, lookupKey: "vehicles"),
-                Field(nameof(VehicleMaintenance.MaintenanceType), "Type"),
+                Field(nameof(VehicleMaintenance.MaintenanceProfileId), "Profile", MasterDataFieldType.Decimal),
                 Field(nameof(VehicleMaintenance.ScheduleDate), "Schedule", MasterDataFieldType.Date),
                 Field(nameof(VehicleMaintenance.MaintenanceStatus), "Status"),
                 Field(nameof(VehicleMaintenance.IsActive), "Active", MasterDataFieldType.Checkbox)
             ],
             [
                 Field(nameof(VehicleMaintenance.VehicleId), "Vehicle", MasterDataFieldType.Select, required: true, lookupKey: "vehicles"),
-                Field(nameof(VehicleMaintenance.MaintenanceType), "Maintenance Type", MasterDataFieldType.Select, required: true, staticOptions: Options("PM", "Repair", "Inspection", "Tire", "Other")),
+                Field(nameof(VehicleMaintenance.MaintenanceProfileId), "Maintenance Profile", MasterDataFieldType.Decimal, required: true),
                 Field(nameof(VehicleMaintenance.ScheduleDate), "Schedule Date", MasterDataFieldType.Date, required: true),
                 Field(nameof(VehicleMaintenance.CompleteDate), "Complete Date", MasterDataFieldType.Date),
                 Field(nameof(VehicleMaintenance.OdometerKm), "Odometer (km)", MasterDataFieldType.Decimal),
@@ -305,8 +432,8 @@ public static class MasterDataDefinitions
                 Field(nameof(TrackingEvent.EventDate), "Date", MasterDataFieldType.Date),
                 Field(nameof(TrackingEvent.ShipmentId), "Shipment ID", MasterDataFieldType.Decimal),
                 Field(nameof(TrackingEvent.DriverId), "Driver", MasterDataFieldType.Select, lookupKey: "drivers"),
-                Field(nameof(TrackingEvent.SourceType), "Source"),
-                Field(nameof(TrackingEvent.SafetyEventType), "Safety Type")
+                Field(nameof(TrackingEvent.SourceProfileId), "Source", MasterDataFieldType.Decimal),
+                Field(nameof(TrackingEvent.SafetyEventProfileId), "Safety", MasterDataFieldType.Decimal)
             ],
             [
                 Field(nameof(TrackingEvent.ShipmentId), "Shipment ID", MasterDataFieldType.Decimal, required: true),
@@ -315,8 +442,8 @@ public static class MasterDataDefinitions
                 Field(nameof(TrackingEvent.EventCode), "Event Code", required: true),
                 Field(nameof(TrackingEvent.EventName), "Event Name", required: true),
                 Field(nameof(TrackingEvent.EventDate), "Event Date", MasterDataFieldType.Date, required: true),
-                Field(nameof(TrackingEvent.SourceType), "Source Type", MasterDataFieldType.Select, required: true, staticOptions: Options("Telematics", "MDVR", "Driver App", "Manual", "API")),
-                Field(nameof(TrackingEvent.SafetyEventType), "Safety Event Type", MasterDataFieldType.Select, staticOptions: Options("Harsh Brake", "Speeding", "Fatigue", "Lane Departure", "Collision", "Temperature Alert", "Other")),
+                Field(nameof(TrackingEvent.SourceProfileId), "Source Profile", MasterDataFieldType.Decimal, required: true),
+                Field(nameof(TrackingEvent.SafetyEventProfileId), "Safety Event Profile", MasterDataFieldType.Decimal),
                 Field(nameof(TrackingEvent.ExternalEventRef), "External Event Ref"),
                 Field(nameof(TrackingEvent.Latitude), "Latitude", MasterDataFieldType.Decimal),
                 Field(nameof(TrackingEvent.Longitude), "Longitude", MasterDataFieldType.Decimal),
@@ -335,22 +462,23 @@ public static class MasterDataDefinitions
             [
                 Field(nameof(Product.ProductCode), "Code"),
                 Field(nameof(Product.ProductName), "Product"),
-                Field(nameof(Product.ProductCategory), "Category"),
+                Field(nameof(Product.ProductCategoryId), "Category", MasterDataFieldType.Select, lookupKey: "product-categories"),
                 Field(nameof(Product.ColdChainFlag), "Cold Chain", MasterDataFieldType.Checkbox),
                 Field(nameof(Product.IsActive), "Active", MasterDataFieldType.Checkbox)
             ],
             [
                 Field(nameof(Product.ProductCode), "Product Code", required: true),
-                Field(nameof(Product.ProductName), "Product Name", required: true),
-                Field(nameof(Product.ProductCategory), "Category"),
+                Field(nameof(Product.ProductNameTh), "Thai Name", required: true),
+                Field(nameof(Product.ProductNameEn), "English Name"),
+                Field(nameof(Product.ProductNameShort), "Short Name"),
+                Field(nameof(Product.ProductCategoryId), "Product Category", MasterDataFieldType.Select, lookupKey: "product-categories"),
                 Field(nameof(Product.HazardousFlag), "Hazardous", MasterDataFieldType.Checkbox),
                 Field(nameof(Product.ColdChainFlag), "Cold Chain", MasterDataFieldType.Checkbox),
                 Field(nameof(Product.MinTemperatureC), "Min Temperature (C)", MasterDataFieldType.Decimal),
                 Field(nameof(Product.MaxTemperatureC), "Max Temperature (C)", MasterDataFieldType.Decimal),
                 Field(nameof(Product.StackableFlag), "Stackable", MasterDataFieldType.Checkbox),
                 Field(nameof(Product.IsActive), "Active", MasterDataFieldType.Checkbox)
-            ]),
-        new(
+            ]),        new(
             "provinces",
             "Provinces",
             "Province codes and local names",
@@ -436,3 +564,6 @@ public static class MasterDataDefinitions
     private static IReadOnlyList<SelectOption> Options(params string[] values)
         => values.Select(value => new SelectOption(value, value)).ToArray();
 }
+
+
+

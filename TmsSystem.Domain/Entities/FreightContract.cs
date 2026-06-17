@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations.Schema;
 using TmsSystem.Domain.Common;
 
 namespace TmsSystem.Domain.Entities;
@@ -10,6 +11,10 @@ public sealed class FreightContract : AuditableEntity
     public string ContractName { get; set; } = string.Empty;
     public DateTime EffectiveDate { get; set; }
     public DateTime? ExpireDate { get; set; }
-    public string RateType { get; set; } = string.Empty;
+    public long RateProfileId { get; set; }
     public string CurrencyCode { get; set; } = string.Empty;
+
+    [NotMapped]
+    public string RateType { get; set; } = string.Empty;
 }
+

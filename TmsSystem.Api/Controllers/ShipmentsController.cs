@@ -47,6 +47,8 @@ public sealed class ShipmentsController(TmsDbContext dbContext) : CrudController
         shipment.ReviseDate = DateTime.UtcNow;
         shipment.ReviseBy = User.Identity?.Name ?? "api";
 
+        var sourceProfileId = request.SourceProfileId ?? 0;
+
         var trackingEvent = new TrackingEvent
         {
             ShipmentId = shipment.ShipmentId,
@@ -57,7 +59,7 @@ public sealed class ShipmentsController(TmsDbContext dbContext) : CrudController
             EventDate = request.EventDate ?? DateTime.UtcNow,
             Latitude = request.Latitude,
             Longitude = request.Longitude,
-            SourceType = string.IsNullOrWhiteSpace(request.SourceType) ? "API" : request.SourceType.Trim(),
+            SourceProfileId = sourceProfileId,
             Remark = request.Remark,
             IsActive = true,
             CreateDate = DateTime.UtcNow,
@@ -69,7 +71,9 @@ public sealed class ShipmentsController(TmsDbContext dbContext) : CrudController
 
         return ApiSuccess(new ShipmentStatusChangeResponseDto { ShipmentId = shipment.ShipmentId, ShipmentNo = shipment.ShipmentNo, PreviousStatus = prevStatus, CurrentStatus = shipment.ShipmentStatus, TrackingEventId = trackingEvent.TrackingEventId }, message: "Shipment status updated.");
     }
-
     private static string ToEventCode(string status)
         => status.Replace(" ", "_", StringComparison.Ordinal).Replace("-", "_", StringComparison.Ordinal).ToUpperInvariant();
 }
+
+
+

@@ -10,6 +10,7 @@ public sealed record UpdateShipmentStatusRequestDto
     public DateTime? EventDate { get; init; }
     public decimal? Latitude { get; init; }
     public decimal? Longitude { get; init; }
+    public long? SourceProfileId { get; init; }
     public string? SourceType { get; init; }
     public string? Remark { get; init; }
 }

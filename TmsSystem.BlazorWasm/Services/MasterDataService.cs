@@ -25,8 +25,23 @@ public sealed class MasterDataService(HttpClient httpClient)
     public Task<OperationResult<List<Driver>>> GetDriversAsync(CancellationToken cancellationToken = default)
         => GetListAsync<Driver>("api/driver", "drivers", cancellationToken);
 
+    public Task<OperationResult<List<ProductProfile>>> GetProductProfilesAsync(CancellationToken cancellationToken = default)
+        => GetListAsync<ProductProfile>("api/product-profile", "product profiles", cancellationToken);
+
+    public Task<OperationResult<List<ProductGroup>>> GetProductGroupsAsync(CancellationToken cancellationToken = default)
+        => GetListAsync<ProductGroup>("api/product-group", "product groups", cancellationToken);
+
+    public Task<OperationResult<List<ProductCategory>>> GetProductCategoriesAsync(CancellationToken cancellationToken = default)
+        => GetListAsync<ProductCategory>("api/product-category", "product categories", cancellationToken);
+
+    public Task<OperationResult<List<Unit>>> GetUnitsAsync(CancellationToken cancellationToken = default)
+        => GetListAsync<Unit>("api/unit", "units", cancellationToken);
+
     public Task<OperationResult<List<Product>>> GetProductsAsync(CancellationToken cancellationToken = default)
         => GetListAsync<Product>("api/product", "products", cancellationToken);
+
+    public Task<OperationResult<List<ProductUnit>>> GetProductUnitsAsync(CancellationToken cancellationToken = default)
+        => GetListAsync<ProductUnit>("api/product-unit", "product units", cancellationToken);
 
     public Task<OperationResult<List<Province>>> GetProvincesAsync(CancellationToken cancellationToken = default)
         => GetListAsync<Province>("api/province", "provinces", cancellationToken);
@@ -121,3 +136,4 @@ public sealed class MasterDataService(HttpClient httpClient)
         return details is { Length: > 0 } ? $"{message} {string.Join(" ", details)}" : message;
     }
 }
+

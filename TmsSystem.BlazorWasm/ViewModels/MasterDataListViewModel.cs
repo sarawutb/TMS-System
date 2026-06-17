@@ -144,7 +144,12 @@ public sealed class MasterDataListViewModel(MasterDataService masterDataService,
             "fuel-transactions" => await LoadTypedItemsAsync<FuelTransaction>(definition.Endpoint, definition.Title),
             "driver-performance" => await LoadTypedItemsAsync<DriverPerformance>(definition.Endpoint, definition.Title),
             "safety-events" => await LoadTypedItemsAsync<TrackingEvent>(definition.Endpoint, definition.Title),
+            "product-profiles" => await LoadTypedItemsAsync<ProductProfile>(definition.Endpoint, definition.Title),
+            "product-groups" => await LoadTypedItemsAsync<ProductGroup>(definition.Endpoint, definition.Title),
+            "product-categories" => await LoadTypedItemsAsync<ProductCategory>(definition.Endpoint, definition.Title),
+            "units" => await LoadTypedItemsAsync<Unit>(definition.Endpoint, definition.Title),
             "products" => await LoadTypedItemsAsync<Product>(definition.Endpoint, definition.Title),
+            "product-units" => await LoadTypedItemsAsync<ProductUnit>(definition.Endpoint, definition.Title),
             "provinces" => await LoadTypedItemsAsync<Province>(definition.Endpoint, definition.Title),
             "districts" => await LoadTypedItemsAsync<District>(definition.Endpoint, definition.Title),
             "subdistricts" => await LoadTypedItemsAsync<SubDistrict>(definition.Endpoint, definition.Title),
@@ -171,6 +176,11 @@ public sealed class MasterDataListViewModel(MasterDataService masterDataService,
             ["carriers"] = await BuildLookupAsync(masterDataService.GetCarriersAsync(), carrier => carrier.CarrierId, carrier => $"{carrier.CarrierName} ({carrier.CarrierCode})"),
             ["vehicles"] = await BuildLookupAsync(masterDataService.GetVehiclesAsync(), vehicle => vehicle.VehicleId, vehicle => vehicle.VehicleNo),
             ["drivers"] = await BuildLookupAsync(masterDataService.GetDriversAsync(), driver => driver.DriverId, driver => $"{driver.DriverName} ({driver.DriverCode})"),
+            ["product-profiles"] = await BuildLookupAsync(masterDataService.GetProductProfilesAsync(), profile => profile.ProductProfileId, profile => $"{profile.ProductProfileName} ({profile.ProductProfileCode})"),
+            ["product-groups"] = await BuildLookupAsync(masterDataService.GetProductGroupsAsync(), group => group.ProductGroupId, group => $"{group.ProductGroupName} ({group.ProductGroupCode})"),
+            ["product-categories"] = await BuildLookupAsync(masterDataService.GetProductCategoriesAsync(), category => category.ProductCategoryId, category => $"{category.ProductCategoryName} ({category.ProductCategoryCode})"),
+            ["units"] = await BuildLookupAsync(masterDataService.GetUnitsAsync(), unit => unit.UnitId, unit => $"{unit.UnitName} ({unit.UnitCode})"),
+            ["products"] = await BuildLookupAsync(masterDataService.GetProductsAsync(), product => product.ProductId, product => $"{product.ProductName} ({product.ProductCode})"),
             ["provinces"] = await BuildLookupAsync(masterDataService.GetProvincesAsync(), province => province.ProvinceId, province => province.ProvinceNameTh),
             ["districts"] = await BuildLookupAsync(masterDataService.GetDistrictsAsync(), district => district.DistrictId, district => district.DistrictNameTh),
             ["subdistricts"] = await BuildLookupAsync(masterDataService.GetSubDistrictsAsync(), subDistrict => subDistrict.SubDistrictId, subDistrict => subDistrict.SubDistrictNameTh)
@@ -188,3 +198,5 @@ public sealed class MasterDataListViewModel(MasterDataService masterDataService,
     private static object? GetRawValue(object item, string propertyName)
         => item.GetType().GetProperty(propertyName)?.GetValue(item);
 }
+
+

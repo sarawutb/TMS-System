@@ -11,9 +11,7 @@ public sealed class Location : AuditableEntity
     public string LocationNameTh { get; set; } = string.Empty;
     public string? LocationNameEn { get; set; }
     public string? LocationNameShort { get; set; }
-    [NotMapped]
-    public string LocationName => string.IsNullOrWhiteSpace(LocationNameShort) ? LocationNameTh : LocationNameShort;
-    public string LocationType { get; set; } = string.Empty;
+    public long LocationProfileId { get; set; }
     public string? AddressText { get; set; }
     public long? SubDistrictId { get; set; }
     public long? DistrictId { get; set; }
@@ -25,4 +23,11 @@ public sealed class Location : AuditableEntity
     public Province? Province { get; set; }
     public District? District { get; set; }
     public SubDistrict? SubDistrict { get; set; }
+
+    [NotMapped]
+    public string LocationName => string.IsNullOrWhiteSpace(LocationNameShort) ? LocationNameTh : LocationNameShort;
+
+    [NotMapped]
+    public string LocationType { get; set; } = string.Empty;
 }
+

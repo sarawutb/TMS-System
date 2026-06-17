@@ -17,7 +17,12 @@ public sealed class TmsDbContext(DbContextOptions<TmsDbContext> options) : DbCon
     public DbSet<Carrier> Carriers => Set<Carrier>();
     public DbSet<Vehicle> Vehicles => Set<Vehicle>();
     public DbSet<Driver> Drivers => Set<Driver>();
+    public DbSet<ProductProfile> ProductProfiles => Set<ProductProfile>();
+    public DbSet<ProductGroup> ProductGroups => Set<ProductGroup>();
+    public DbSet<ProductCategory> ProductCategories => Set<ProductCategory>();
+    public DbSet<Unit> Units => Set<Unit>();
     public DbSet<Product> Products => Set<Product>();
+    public DbSet<ProductUnit> ProductUnits => Set<ProductUnit>();
     public DbSet<IntegrationPartner> IntegrationPartners => Set<IntegrationPartner>();
     public DbSet<IntegrationMessage> IntegrationMessages => Set<IntegrationMessage>();
     public DbSet<TransportOrder> TransportOrders => Set<TransportOrder>();
@@ -44,7 +49,18 @@ public sealed class TmsDbContext(DbContextOptions<TmsDbContext> options) : DbCon
     {
         ConfigureAudit(modelBuilder);
         ConfigureSecurity(modelBuilder);
+        ConfigureMasterData(modelBuilder);
+        ConfigureProductCatalog(modelBuilder);
+        ConfigureIntegration(modelBuilder);
+        ConfigurePlanning(modelBuilder);
+        ConfigureExecution(modelBuilder);
+        ConfigureFleet(modelBuilder);
+        ConfigureFinance(modelBuilder);
+        ConfigureIotAndAnalytics(modelBuilder);
+    }
 
+    private static void ConfigureMasterData(ModelBuilder modelBuilder)
+    {
         modelBuilder.Entity<Factory>(entity =>
         {
             entity.ToTable("mst_factory");
@@ -53,7 +69,6 @@ public sealed class TmsDbContext(DbContextOptions<TmsDbContext> options) : DbCon
             entity.Property(x => x.FactoryNameTh).HasMaxLength(200).IsRequired();
             entity.Property(x => x.FactoryNameEn).HasMaxLength(200);
             entity.Property(x => x.FactoryNameShort).HasMaxLength(50);
-            entity.Property(x => x.IndustryType).HasMaxLength(50).IsRequired();
             entity.Property(x => x.TimeZone).HasMaxLength(100);
             entity.Property(x => x.TaxId).HasMaxLength(13);
             entity.Property(x => x.BranchCode).HasMaxLength(5).HasDefaultValue("00000").IsRequired(false);
@@ -68,7 +83,6 @@ public sealed class TmsDbContext(DbContextOptions<TmsDbContext> options) : DbCon
             entity.Property(x => x.CustomerNameTh).HasMaxLength(200).IsRequired();
             entity.Property(x => x.CustomerNameEn).HasMaxLength(200);
             entity.Property(x => x.CustomerNameShort).HasMaxLength(50);
-            entity.Property(x => x.CustomerType).HasMaxLength(50);
             entity.Property(x => x.ContactName).HasMaxLength(150);
             entity.Property(x => x.ContactEmail).HasMaxLength(150);
             entity.Property(x => x.TaxId).HasMaxLength(13);
@@ -121,7 +135,6 @@ public sealed class TmsDbContext(DbContextOptions<TmsDbContext> options) : DbCon
             entity.Property(x => x.LocationNameTh).HasMaxLength(200).IsRequired();
             entity.Property(x => x.LocationNameEn).HasMaxLength(200);
             entity.Property(x => x.LocationNameShort).HasMaxLength(50);
-            entity.Property(x => x.LocationType).HasMaxLength(50).IsRequired();
             entity.Property(x => x.AddressText).HasMaxLength(500);
             entity.Property(x => x.Latitude).HasPrecision(10, 7);
             entity.Property(x => x.Longitude).HasPrecision(10, 7);
@@ -141,7 +154,6 @@ public sealed class TmsDbContext(DbContextOptions<TmsDbContext> options) : DbCon
             entity.Property(x => x.CarrierNameTh).HasMaxLength(200).IsRequired();
             entity.Property(x => x.CarrierNameEn).HasMaxLength(200);
             entity.Property(x => x.CarrierNameShort).HasMaxLength(50);
-            entity.Property(x => x.CarrierType).HasMaxLength(50);
             entity.Property(x => x.SafetyRating).HasPrecision(5, 2);
             entity.Property(x => x.TaxId).HasMaxLength(13);
             entity.Property(x => x.BranchCode).HasMaxLength(5).HasDefaultValue("00000").IsRequired(false);
@@ -153,7 +165,6 @@ public sealed class TmsDbContext(DbContextOptions<TmsDbContext> options) : DbCon
             entity.ToTable("mst_vehicle");
             entity.HasKey(x => x.VehicleId);
             entity.Property(x => x.VehicleNo).HasMaxLength(50).IsRequired();
-            entity.Property(x => x.VehicleType).HasMaxLength(50).IsRequired();
             entity.Property(x => x.CapacityWeightKg).HasPrecision(18, 2);
             entity.Property(x => x.CapacityVolumeM3).HasPrecision(18, 2);
             entity.HasOne(x => x.Carrier).WithMany(x => x.Vehicles).HasForeignKey(x => x.CarrierId).OnDelete(DeleteBehavior.Restrict);
@@ -171,26 +182,108 @@ public sealed class TmsDbContext(DbContextOptions<TmsDbContext> options) : DbCon
             entity.HasOne(x => x.Carrier).WithMany(x => x.Drivers).HasForeignKey(x => x.CarrierId).OnDelete(DeleteBehavior.Restrict);
             entity.HasIndex(x => x.DriverCode).HasDatabaseName("UX_mst_driver_DriverCode").IsUnique();
         });
+    }
+
+    private static void ConfigureProductCatalog(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<ProductProfile>(entity =>
+        {
+            entity.ToTable("mst_product_profile");
+            entity.HasKey(x => x.ProductProfileId);
+            entity.Property(x => x.ProductProfileCode).HasMaxLength(50).IsRequired();
+            entity.Property(x => x.ProductProfileNameTh).HasMaxLength(200).IsRequired();
+            entity.Property(x => x.ProductProfileNameEn).HasMaxLength(200);
+            entity.Property(x => x.ProductProfileNameShort).HasMaxLength(50);
+            entity.Property(x => x.Description).HasMaxLength(500);
+            entity.HasIndex(x => x.ProductProfileCode).HasDatabaseName("UX_mst_product_profile_ProductProfileCode").IsUnique();
+        });
+
+        modelBuilder.Entity<ProductGroup>(entity =>
+        {
+            entity.ToTable("mst_product_group");
+            entity.HasKey(x => x.ProductGroupId);
+            entity.Property(x => x.ProductGroupCode).HasMaxLength(50).IsRequired();
+            entity.Property(x => x.ProductGroupNameTh).HasMaxLength(200).IsRequired();
+            entity.Property(x => x.ProductGroupNameEn).HasMaxLength(200);
+            entity.Property(x => x.ProductGroupNameShort).HasMaxLength(50);
+            entity.Property(x => x.Description).HasMaxLength(500);
+            entity.HasOne(x => x.ProductProfile).WithMany(x => x.ProductGroups).HasForeignKey(x => x.ProductProfileId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasIndex(x => x.ProductGroupCode).HasDatabaseName("UX_mst_product_group_ProductGroupCode").IsUnique();
+            entity.HasIndex(x => x.ProductProfileId).HasDatabaseName("IX_mst_product_group_ProductProfileId");
+        });
+
+        modelBuilder.Entity<ProductCategory>(entity =>
+        {
+            entity.ToTable("mst_product_category");
+            entity.HasKey(x => x.ProductCategoryId);
+            entity.Property(x => x.ProductCategoryCode).HasMaxLength(50).IsRequired();
+            entity.Property(x => x.ProductCategoryNameTh).HasMaxLength(200).IsRequired();
+            entity.Property(x => x.ProductCategoryNameEn).HasMaxLength(200);
+            entity.Property(x => x.ProductCategoryNameShort).HasMaxLength(50);
+            entity.Property(x => x.Description).HasMaxLength(500);
+            entity.HasOne(x => x.ProductGroup).WithMany(x => x.ProductCategories).HasForeignKey(x => x.ProductGroupId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasIndex(x => x.ProductCategoryCode).HasDatabaseName("UX_mst_product_category_ProductCategoryCode").IsUnique();
+            entity.HasIndex(x => x.ProductGroupId).HasDatabaseName("IX_mst_product_category_ProductGroupId");
+        });
+
+        modelBuilder.Entity<Unit>(entity =>
+        {
+            entity.ToTable("mst_unit");
+            entity.HasKey(x => x.UnitId);
+            entity.Property(x => x.UnitCode).HasMaxLength(50).IsRequired();
+            entity.Property(x => x.UnitNameTh).HasMaxLength(200).IsRequired();
+            entity.Property(x => x.UnitNameEn).HasMaxLength(200);
+            entity.Property(x => x.UnitNameShort).HasMaxLength(50);
+            entity.Property(x => x.UnitSymbol).HasMaxLength(20);
+            entity.Property(x => x.DecimalPrecision).HasDefaultValue((byte)2);
+            entity.HasIndex(x => x.UnitCode).HasDatabaseName("UX_mst_unit_UnitCode").IsUnique();
+        });
 
         modelBuilder.Entity<Product>(entity =>
         {
             entity.ToTable("mst_product");
             entity.HasKey(x => x.ProductId);
             entity.Property(x => x.ProductCode).HasMaxLength(80).IsRequired();
-            entity.Property(x => x.ProductName).HasMaxLength(200).IsRequired();
-            entity.Property(x => x.ProductCategory).HasMaxLength(80);
+            entity.Property(x => x.ProductNameTh).HasMaxLength(200).IsRequired();
+            entity.Property(x => x.ProductNameEn).HasMaxLength(200);
+            entity.Property(x => x.ProductNameShort).HasMaxLength(50);
             entity.Property(x => x.MinTemperatureC).HasPrecision(8, 2);
             entity.Property(x => x.MaxTemperatureC).HasPrecision(8, 2);
+            entity.HasOne(x => x.ProductCategory).WithMany(x => x.Products).HasForeignKey(x => x.ProductCategoryId).OnDelete(DeleteBehavior.Restrict);
             entity.HasIndex(x => x.ProductCode).HasDatabaseName("UX_mst_product_ProductCode").IsUnique();
+            entity.HasIndex(x => x.ProductCategoryId).HasDatabaseName("IX_mst_product_ProductCategoryId");
         });
 
+        modelBuilder.Entity<ProductUnit>(entity =>
+        {
+            entity.ToTable("mst_product_unit");
+            entity.HasKey(x => x.ProductUnitId);
+            entity.Property(x => x.UnitRole).HasMaxLength(50);
+            entity.Property(x => x.ConversionQtyToBase).HasPrecision(18, 6).HasDefaultValue(1m);
+            entity.Property(x => x.NetWeightKg).HasPrecision(18, 3);
+            entity.Property(x => x.GrossWeightKg).HasPrecision(18, 3);
+            entity.Property(x => x.VolumeCbm).HasPrecision(18, 6);
+            entity.Property(x => x.LengthCm).HasPrecision(18, 3);
+            entity.Property(x => x.WidthCm).HasPrecision(18, 3);
+            entity.Property(x => x.HeightCm).HasPrecision(18, 3);
+            entity.Property(x => x.Barcode).HasMaxLength(100);
+            entity.HasOne(x => x.Product).WithMany(x => x.ProductUnits).HasForeignKey(x => x.ProductId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(x => x.Unit).WithMany(x => x.ProductUnits).HasForeignKey(x => x.UnitId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasIndex(x => new { x.ProductId, x.UnitId }).HasDatabaseName("UX_mst_product_unit_ProductId_UnitId").IsUnique();
+            entity.HasIndex(x => x.ProductId).HasDatabaseName("UX_mst_product_unit_DefaultOrderUnit").IsUnique().HasFilter("[IsDefaultOrderUnit] = 1");
+            entity.HasIndex(x => x.ProductId).HasDatabaseName("UX_mst_product_unit_DefaultTransportUnit").IsUnique().HasFilter("[IsDefaultTransportUnit] = 1");
+            entity.ToTable(t => t.HasCheckConstraint("CK_mst_product_unit_ConversionQtyToBase", "[ConversionQtyToBase] > 0"));
+        });
+    }
+
+    private static void ConfigureIntegration(ModelBuilder modelBuilder)
+    {
         modelBuilder.Entity<IntegrationPartner>(entity =>
         {
             entity.ToTable("cfg_integration_partner");
             entity.HasKey(x => x.IntegrationPartnerId);
             entity.Property(x => x.PartnerCode).HasMaxLength(50).IsRequired();
             entity.Property(x => x.PartnerName).HasMaxLength(200).IsRequired();
-            entity.Property(x => x.SystemType).HasMaxLength(50).IsRequired();
             entity.Property(x => x.IntegrationMethod).HasMaxLength(50).IsRequired();
             entity.Property(x => x.EndpointUrl).HasMaxLength(500);
             entity.HasIndex(x => x.PartnerCode).HasDatabaseName("UX_cfg_integration_partner_PartnerCode").IsUnique();
@@ -201,12 +294,14 @@ public sealed class TmsDbContext(DbContextOptions<TmsDbContext> options) : DbCon
             entity.ToTable("trn_integration_message");
             entity.HasKey(x => x.IntegrationMessageId);
             entity.Property(x => x.Direction).HasMaxLength(20).IsRequired();
-            entity.Property(x => x.MessageType).HasMaxLength(80).IsRequired();
             entity.Property(x => x.ReferenceNo).HasMaxLength(100);
             entity.Property(x => x.PayloadRef).HasMaxLength(500);
             entity.Property(x => x.MessageStatus).HasMaxLength(30).IsRequired();
         });
+    }
 
+    private static void ConfigurePlanning(ModelBuilder modelBuilder)
+    {
         modelBuilder.Entity<TransportOrder>(entity =>
         {
             entity.ToTable("trn_transport_order");
@@ -226,9 +321,12 @@ public sealed class TmsDbContext(DbContextOptions<TmsDbContext> options) : DbCon
             entity.Property(x => x.ProductCode).HasMaxLength(80);
             entity.Property(x => x.ProductDescription).HasMaxLength(300);
             entity.Property(x => x.Quantity).HasPrecision(18, 3);
-            entity.Property(x => x.UnitName).HasMaxLength(30).IsRequired();
+            entity.Property(x => x.UnitName).HasMaxLength(30).IsRequired(false);
             entity.Property(x => x.WeightKg).HasPrecision(18, 3);
             entity.Property(x => x.VolumeM3).HasPrecision(18, 3);
+            entity.HasOne(x => x.Product).WithMany().HasForeignKey(x => x.ProductId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(x => x.ProductUnit).WithMany().HasForeignKey(x => x.ProductUnitId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(x => x.Unit).WithMany().HasForeignKey(x => x.UnitId).OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<RoutePlan>(entity =>
@@ -238,7 +336,6 @@ public sealed class TmsDbContext(DbContextOptions<TmsDbContext> options) : DbCon
             entity.Property(x => x.RoutePlanNo).HasMaxLength(50).IsRequired();
             entity.Property(x => x.OptimizationEngine).HasMaxLength(100);
             entity.Property(x => x.TransportMode).HasMaxLength(50);
-            entity.Property(x => x.VehicleType).HasMaxLength(50);
             entity.Property(x => x.TotalDistanceKm).HasPrecision(18, 2);
             entity.Property(x => x.EstimatedCost).HasPrecision(18, 2);
             entity.Property(x => x.RiskScore).HasPrecision(5, 2);
@@ -256,7 +353,6 @@ public sealed class TmsDbContext(DbContextOptions<TmsDbContext> options) : DbCon
             entity.ToTable("trn_load_plan");
             entity.HasKey(x => x.LoadPlanId);
             entity.Property(x => x.LoadPlanNo).HasMaxLength(50).IsRequired();
-            entity.Property(x => x.VehicleType).HasMaxLength(50).IsRequired();
             entity.Property(x => x.ContainerLengthM).HasPrecision(18, 3);
             entity.Property(x => x.ContainerWidthM).HasPrecision(18, 3);
             entity.Property(x => x.ContainerHeightM).HasPrecision(18, 3);
@@ -284,7 +380,10 @@ public sealed class TmsDbContext(DbContextOptions<TmsDbContext> options) : DbCon
             entity.Property(x => x.RejectReason).HasMaxLength(500);
             entity.HasIndex(x => x.TenderNo).HasDatabaseName("UX_trn_carrier_tender_TenderNo").IsUnique();
         });
+    }
 
+    private static void ConfigureExecution(ModelBuilder modelBuilder)
+    {
         modelBuilder.Entity<Shipment>(entity =>
         {
             entity.ToTable("trn_shipment");
@@ -298,7 +397,6 @@ public sealed class TmsDbContext(DbContextOptions<TmsDbContext> options) : DbCon
         {
             entity.ToTable("trn_shipment_stop");
             entity.HasKey(x => x.ShipmentStopId);
-            entity.Property(x => x.StopType).HasMaxLength(30).IsRequired();
             entity.Property(x => x.DockCode).HasMaxLength(50);
             entity.Property(x => x.StopStatus).HasMaxLength(30).IsRequired();
         });
@@ -311,8 +409,6 @@ public sealed class TmsDbContext(DbContextOptions<TmsDbContext> options) : DbCon
             entity.Property(x => x.EventName).HasMaxLength(150).IsRequired();
             entity.Property(x => x.Latitude).HasPrecision(10, 7);
             entity.Property(x => x.Longitude).HasPrecision(10, 7);
-            entity.Property(x => x.SourceType).HasMaxLength(50).IsRequired();
-            entity.Property(x => x.SafetyEventType).HasMaxLength(50);
             entity.Property(x => x.ExternalEventRef).HasMaxLength(100);
             entity.Property(x => x.Remark).HasMaxLength(500);
             entity.HasOne<Shipment>().WithMany().HasForeignKey(x => x.ShipmentId).OnDelete(DeleteBehavior.Restrict);
@@ -337,16 +433,17 @@ public sealed class TmsDbContext(DbContextOptions<TmsDbContext> options) : DbCon
         {
             entity.ToTable("trn_exception");
             entity.HasKey(x => x.ExceptionId);
-            entity.Property(x => x.ExceptionType).HasMaxLength(50).IsRequired();
             entity.Property(x => x.Severity).HasMaxLength(20).IsRequired();
             entity.Property(x => x.ResolutionStatus).HasMaxLength(30).IsRequired();
         });
+    }
 
+    private static void ConfigureFleet(ModelBuilder modelBuilder)
+    {
         modelBuilder.Entity<VehicleMaintenance>(entity =>
         {
             entity.ToTable("trn_vehicle_maintenance");
             entity.HasKey(x => x.VehicleMaintenanceId);
-            entity.Property(x => x.MaintenanceType).HasMaxLength(50).IsRequired();
             entity.Property(x => x.OdometerKm).HasPrecision(18, 2);
             entity.Property(x => x.MaintenanceStatus).HasMaxLength(30).IsRequired();
             entity.Property(x => x.Remark).HasMaxLength(500);
@@ -373,14 +470,16 @@ public sealed class TmsDbContext(DbContextOptions<TmsDbContext> options) : DbCon
             entity.Property(x => x.PodAccuracyScore).HasPrecision(5, 2);
             entity.Property(x => x.OverallScore).HasPrecision(5, 2);
         });
+    }
 
+    private static void ConfigureFinance(ModelBuilder modelBuilder)
+    {
         modelBuilder.Entity<FreightContract>(entity =>
         {
             entity.ToTable("mst_freight_contract");
             entity.HasKey(x => x.FreightContractId);
             entity.Property(x => x.ContractNo).HasMaxLength(50).IsRequired();
             entity.Property(x => x.ContractName).HasMaxLength(200).IsRequired();
-            entity.Property(x => x.RateType).HasMaxLength(50).IsRequired();
             entity.Property(x => x.CurrencyCode).HasMaxLength(10).IsRequired();
             entity.HasIndex(x => x.ContractNo).HasDatabaseName("UX_mst_freight_contract_ContractNo").IsUnique();
         });
@@ -408,13 +507,15 @@ public sealed class TmsDbContext(DbContextOptions<TmsDbContext> options) : DbCon
             entity.Property(x => x.ErpPostingStatus).HasMaxLength(30);
             entity.HasIndex(x => x.InvoiceNo).HasDatabaseName("UX_trn_billing_invoice_InvoiceNo").IsUnique();
         });
+    }
 
+    private static void ConfigureIotAndAnalytics(ModelBuilder modelBuilder)
+    {
         modelBuilder.Entity<IotDevice>(entity =>
         {
             entity.ToTable("mst_iot_device");
             entity.HasKey(x => x.IotDeviceId);
             entity.Property(x => x.DeviceCode).HasMaxLength(80).IsRequired();
-            entity.Property(x => x.DeviceType).HasMaxLength(50).IsRequired();
             entity.HasIndex(x => x.DeviceCode).HasDatabaseName("UX_mst_iot_device_DeviceCode").IsUnique();
         });
 
@@ -475,3 +576,4 @@ public sealed class TmsDbContext(DbContextOptions<TmsDbContext> options) : DbCon
         });
     }
 }
+

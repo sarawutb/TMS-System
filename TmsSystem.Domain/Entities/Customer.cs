@@ -10,9 +10,7 @@ public sealed class Customer : AuditableEntity
     public string CustomerNameTh { get; set; } = string.Empty;
     public string? CustomerNameEn { get; set; }
     public string? CustomerNameShort { get; set; }
-    [NotMapped]
-    public string CustomerName => string.IsNullOrWhiteSpace(CustomerNameShort) ? CustomerNameTh : CustomerNameShort;
-    public string? CustomerType { get; set; }
+    public long? CustomerProfileId { get; set; }
     public string? ContactName { get; set; }
     public string? ContactEmail { get; set; }
     public string? TaxId { get; set; }
@@ -24,4 +22,11 @@ public sealed class Customer : AuditableEntity
     public Province? Province { get; set; }
     public District? District { get; set; }
     public SubDistrict? SubDistrict { get; set; }
+
+    [NotMapped]
+    public string CustomerName => string.IsNullOrWhiteSpace(CustomerNameShort) ? CustomerNameTh : CustomerNameShort;
+
+    [NotMapped]
+    public string? CustomerType { get; set; }
 }
+

@@ -173,6 +173,11 @@ public sealed class MasterDataFormViewModel(MasterDataService masterDataService,
         lookupOptions["carriers"] = await BuildOptionsAsync(masterDataService.GetCarriersAsync(), carrier => carrier.CarrierId, carrier => $"{carrier.CarrierName} ({carrier.CarrierCode})");
         lookupOptions["vehicles"] = await BuildOptionsAsync(masterDataService.GetVehiclesAsync(), vehicle => vehicle.VehicleId, vehicle => vehicle.VehicleNo);
         lookupOptions["drivers"] = await BuildOptionsAsync(masterDataService.GetDriversAsync(), driver => driver.DriverId, driver => $"{driver.DriverName} ({driver.DriverCode})");
+        lookupOptions["product-profiles"] = await BuildOptionsAsync(masterDataService.GetProductProfilesAsync(), profile => profile.ProductProfileId, profile => $"{profile.ProductProfileName} ({profile.ProductProfileCode})");
+        lookupOptions["product-groups"] = await BuildOptionsAsync(masterDataService.GetProductGroupsAsync(), group => group.ProductGroupId, group => $"{group.ProductGroupName} ({group.ProductGroupCode})");
+        lookupOptions["product-categories"] = await BuildOptionsAsync(masterDataService.GetProductCategoriesAsync(), category => category.ProductCategoryId, category => $"{category.ProductCategoryName} ({category.ProductCategoryCode})");
+        lookupOptions["units"] = await BuildOptionsAsync(masterDataService.GetUnitsAsync(), unit => unit.UnitId, unit => $"{unit.UnitName} ({unit.UnitCode})");
+        lookupOptions["products"] = await BuildOptionsAsync(masterDataService.GetProductsAsync(), product => product.ProductId, product => $"{product.ProductName} ({product.ProductCode})");
         lookupOptions["provinces"] = await BuildOptionsAsync(masterDataService.GetProvincesAsync(), province => province.ProvinceId, province => province.ProvinceNameTh);
         lookupOptions["districts"] = await BuildOptionsAsync(masterDataService.GetDistrictsAsync(), district => district.DistrictId, district => district.DistrictNameTh);
         lookupOptions["subdistricts"] = await BuildOptionsAsync(masterDataService.GetSubDistrictsAsync(), subDistrict => subDistrict.SubDistrictId, subDistrict => subDistrict.SubDistrictNameTh);
@@ -240,7 +245,12 @@ public sealed class MasterDataFormViewModel(MasterDataService masterDataService,
             "fuel-transactions" => await LoadTypedRecordAsync<FuelTransaction>(definition.Endpoint, id),
             "driver-performance" => await LoadTypedRecordAsync<DriverPerformance>(definition.Endpoint, id),
             "safety-events" => await LoadTypedRecordAsync<TrackingEvent>(definition.Endpoint, id),
+            "product-profiles" => await LoadTypedRecordAsync<ProductProfile>(definition.Endpoint, id),
+            "product-groups" => await LoadTypedRecordAsync<ProductGroup>(definition.Endpoint, id),
+            "product-categories" => await LoadTypedRecordAsync<ProductCategory>(definition.Endpoint, id),
+            "units" => await LoadTypedRecordAsync<Unit>(definition.Endpoint, id),
             "products" => await LoadTypedRecordAsync<Product>(definition.Endpoint, id),
+            "product-units" => await LoadTypedRecordAsync<ProductUnit>(definition.Endpoint, id),
             "provinces" => await LoadTypedRecordAsync<Province>(definition.Endpoint, id),
             "districts" => await LoadTypedRecordAsync<District>(definition.Endpoint, id),
             "subdistricts" => await LoadTypedRecordAsync<SubDistrict>(definition.Endpoint, id),
@@ -260,7 +270,12 @@ public sealed class MasterDataFormViewModel(MasterDataService masterDataService,
             "fuel-transactions" => await CreateTypedRecordAsync<FuelTransaction>(definition.Endpoint),
             "driver-performance" => await CreateTypedRecordAsync<DriverPerformance>(definition.Endpoint),
             "safety-events" => await CreateTypedRecordAsync<TrackingEvent>(definition.Endpoint),
+            "product-profiles" => await CreateTypedRecordAsync<ProductProfile>(definition.Endpoint),
+            "product-groups" => await CreateTypedRecordAsync<ProductGroup>(definition.Endpoint),
+            "product-categories" => await CreateTypedRecordAsync<ProductCategory>(definition.Endpoint),
+            "units" => await CreateTypedRecordAsync<Unit>(definition.Endpoint),
             "products" => await CreateTypedRecordAsync<Product>(definition.Endpoint),
+            "product-units" => await CreateTypedRecordAsync<ProductUnit>(definition.Endpoint),
             "provinces" => await CreateTypedRecordAsync<Province>(definition.Endpoint),
             "districts" => await CreateTypedRecordAsync<District>(definition.Endpoint),
             "subdistricts" => await CreateTypedRecordAsync<SubDistrict>(definition.Endpoint),
@@ -280,7 +295,12 @@ public sealed class MasterDataFormViewModel(MasterDataService masterDataService,
             "fuel-transactions" => await UpdateTypedRecordAsync<FuelTransaction>(definition.Endpoint, id),
             "driver-performance" => await UpdateTypedRecordAsync<DriverPerformance>(definition.Endpoint, id),
             "safety-events" => await UpdateTypedRecordAsync<TrackingEvent>(definition.Endpoint, id),
+            "product-profiles" => await UpdateTypedRecordAsync<ProductProfile>(definition.Endpoint, id),
+            "product-groups" => await UpdateTypedRecordAsync<ProductGroup>(definition.Endpoint, id),
+            "product-categories" => await UpdateTypedRecordAsync<ProductCategory>(definition.Endpoint, id),
+            "units" => await UpdateTypedRecordAsync<Unit>(definition.Endpoint, id),
             "products" => await UpdateTypedRecordAsync<Product>(definition.Endpoint, id),
+            "product-units" => await UpdateTypedRecordAsync<ProductUnit>(definition.Endpoint, id),
             "provinces" => await UpdateTypedRecordAsync<Province>(definition.Endpoint, id),
             "districts" => await UpdateTypedRecordAsync<District>(definition.Endpoint, id),
             "subdistricts" => await UpdateTypedRecordAsync<SubDistrict>(definition.Endpoint, id),
@@ -329,3 +349,5 @@ public sealed class MasterDataFormViewModel(MasterDataService masterDataService,
         property?.SetValue(Record, value);
     }
 }
+
+

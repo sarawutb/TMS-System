@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations.Schema;
 using TmsSystem.Domain.Common;
 
 namespace TmsSystem.Domain.Entities;
@@ -7,7 +8,7 @@ public sealed class LoadPlan : AuditableEntity
     public long LoadPlanId { get; set; }
     public long? RoutePlanId { get; set; }
     public string LoadPlanNo { get; set; } = string.Empty;
-    public string VehicleType { get; set; } = string.Empty;
+    public long VehicleProfileId { get; set; }
     public long? VehicleId { get; set; }
     public decimal? ContainerLengthM { get; set; }
     public decimal? ContainerWidthM { get; set; }
@@ -21,7 +22,11 @@ public sealed class LoadPlan : AuditableEntity
     public string? LoadPlanJson { get; set; }
     public string? PlacementJson { get; set; }
     public string? ConstraintIssuesJson { get; set; }
-    public bool LoadFeasible { get; set; }
+    public bool LoadFeasible { get; set; } = true;
     public RoutePlan? RoutePlan { get; set; }
     public Vehicle? Vehicle { get; set; }
+
+    [NotMapped]
+    public string VehicleType { get; set; } = string.Empty;
 }
+

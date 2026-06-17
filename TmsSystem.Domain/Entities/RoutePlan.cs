@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations.Schema;
 using TmsSystem.Domain.Common;
 
 namespace TmsSystem.Domain.Entities;
@@ -9,7 +10,7 @@ public sealed class RoutePlan : AuditableEntity
     public DateTime PlanDate { get; set; }
     public string? OptimizationEngine { get; set; }
     public string? TransportMode { get; set; }
-    public string? VehicleType { get; set; }
+    public long? VehicleProfileId { get; set; }
     public long? VehicleId { get; set; }
     public long? CarrierId { get; set; }
     public decimal? TotalDistanceKm { get; set; }
@@ -25,4 +26,8 @@ public sealed class RoutePlan : AuditableEntity
     public Vehicle? Vehicle { get; set; }
     public Carrier? Carrier { get; set; }
     public ICollection<LoadPlan> LoadPlans { get; set; } = new List<LoadPlan>();
+
+    [NotMapped]
+    public string? VehicleType { get; set; }
 }
+

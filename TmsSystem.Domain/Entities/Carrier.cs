@@ -10,9 +10,7 @@ public sealed class Carrier : AuditableEntity
     public string CarrierNameTh { get; set; } = string.Empty;
     public string? CarrierNameEn { get; set; }
     public string? CarrierNameShort { get; set; }
-    [NotMapped]
-    public string CarrierName => string.IsNullOrWhiteSpace(CarrierNameShort) ? CarrierNameTh : CarrierNameShort;
-    public string? CarrierType { get; set; }
+    public long? CarrierProfileId { get; set; }
     public bool ApiEnabled { get; set; }
     public bool EdiEnabled { get; set; }
     public decimal? SafetyRating { get; set; }
@@ -20,4 +18,11 @@ public sealed class Carrier : AuditableEntity
     public string? BranchCode { get; set; } = "00000";
     public ICollection<Vehicle> Vehicles { get; set; } = new List<Vehicle>();
     public ICollection<Driver> Drivers { get; set; } = new List<Driver>();
+
+    [NotMapped]
+    public string CarrierName => string.IsNullOrWhiteSpace(CarrierNameShort) ? CarrierNameTh : CarrierNameShort;
+
+    [NotMapped]
+    public string? CarrierType { get; set; }
 }
+
