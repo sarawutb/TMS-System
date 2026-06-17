@@ -134,6 +134,7 @@ public sealed class MasterDataListViewModel(MasterDataService masterDataService,
     private async Task<OperationResult<PagedResult<object>>> LoadItemsAsync(MasterDataDefinition definition)
         => definition.Key switch
         {
+            "profiles" => await LoadTypedItemsAsync<Profile>(definition.Endpoint, definition.Title),
             "factories" => await LoadTypedItemsAsync<Factory>(definition.Endpoint, definition.Title),
             "customers" => await LoadTypedItemsAsync<Customer>(definition.Endpoint, definition.Title),
             "locations" => await LoadTypedItemsAsync<Location>(definition.Endpoint, definition.Title),
@@ -170,8 +171,10 @@ public sealed class MasterDataListViewModel(MasterDataService masterDataService,
 
     private async Task LoadLookupLabelsAsync()
     {
+        var profileLabels = await BuildLookupAsync(masterDataService.GetProfilesAsync(), profile => profile.ProfileId, profile => $"{profile.ProfileName} ({profile.ProfileCode})");
         var labels = new Dictionary<string, Dictionary<string, string>>
         {
+            ["profiles"] = profileLabels,
             ["factories"] = await BuildLookupAsync(masterDataService.GetFactoriesAsync(), factory => factory.FactoryId, factory => $"{factory.FactoryName} ({factory.FactoryCode})"),
             ["carriers"] = await BuildLookupAsync(masterDataService.GetCarriersAsync(), carrier => carrier.CarrierId, carrier => $"{carrier.CarrierName} ({carrier.CarrierCode})"),
             ["vehicles"] = await BuildLookupAsync(masterDataService.GetVehiclesAsync(), vehicle => vehicle.VehicleId, vehicle => vehicle.VehicleNo),
@@ -186,6 +189,11 @@ public sealed class MasterDataListViewModel(MasterDataService masterDataService,
             ["subdistricts"] = await BuildLookupAsync(masterDataService.GetSubDistrictsAsync(), subDistrict => subDistrict.SubDistrictId, subDistrict => subDistrict.SubDistrictNameTh)
         };
 
+        foreach (var pair in MasterDataDefinitions.ProfileLookupScopes)
+        {
+            labels[pair.Key] = profileLabels;
+        }
+
         LookupLabels = labels;
     }
 
@@ -198,5 +206,4 @@ public sealed class MasterDataListViewModel(MasterDataService masterDataService,
     private static object? GetRawValue(object item, string propertyName)
         => item.GetType().GetProperty(propertyName)?.GetValue(item);
 }
-
 

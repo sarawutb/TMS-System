@@ -7,6 +7,9 @@ namespace TmsSystem.BlazorWasm.Services;
 
 public sealed class MasterDataService(HttpClient httpClient)
 {
+    public Task<OperationResult<List<Profile>>> GetProfilesAsync(CancellationToken cancellationToken = default)
+        => GetListAsync<Profile>("api/profile", "profiles", cancellationToken);
+
     public Task<OperationResult<List<Factory>>> GetFactoriesAsync(CancellationToken cancellationToken = default)
         => GetListAsync<Factory>("api/factory", "factories", cancellationToken);
 
@@ -136,4 +139,3 @@ public sealed class MasterDataService(HttpClient httpClient)
         return details is { Length: > 0 } ? $"{message} {string.Join(" ", details)}" : message;
     }
 }
-

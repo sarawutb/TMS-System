@@ -26,6 +26,12 @@ public sealed class Product : AuditableEntity
     public ICollection<ProductUnit> ProductUnits { get; set; } = new List<ProductUnit>();
 
     [NotMapped]
+    public long? ProductProfileId { get; set; }
+
+    [NotMapped]
+    public long? ProductGroupId { get; set; }
+
+    [NotMapped]
     public string ProductName { get => string.IsNullOrWhiteSpace(ProductNameShort) ? ProductNameTh : ProductNameShort; set => ProductNameTh = value; }
 }
 

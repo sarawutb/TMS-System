@@ -16,5 +16,8 @@ public sealed class ProductCategory : AuditableEntity
     public ICollection<Product> Products { get; set; } = new List<Product>();
 
     [NotMapped]
+    public long? ProductProfileId { get; set; }
+
+    [NotMapped]
     public string ProductCategoryName => string.IsNullOrWhiteSpace(ProductCategoryNameShort) ? ProductCategoryNameTh : ProductCategoryNameShort;
 }

@@ -10,6 +10,8 @@ namespace TmsSystem.BlazorWasm.ViewModels;
 public sealed class MasterDataFormViewModel(MasterDataService masterDataService, NavigationManager navigationManager)
 {
     private readonly Dictionary<string, List<SelectOption>> lookupOptions = new();
+    private List<ProductGroup> productGroups = new();
+    private List<ProductCategory> productCategories = new();
 
     public IReadOnlyList<MasterDataDefinition> Definitions => MasterDataDefinitions.All;
     public MasterDataDefinition SelectedDefinition { get; private set; } = MasterDataDefinitions.Default;
@@ -107,7 +109,7 @@ public sealed class MasterDataFormViewModel(MasterDataService masterDataService,
             convertedValue = string.Empty;
         }
 
-        property.SetValue(Record, convertedValue);
+        SetRawValue(field.Name, convertedValue);
         await HandleDependentFieldChangeAsync(field.Name);
     }
 
@@ -169,13 +171,24 @@ public sealed class MasterDataFormViewModel(MasterDataService masterDataService,
 
     private async Task LoadLookupsAsync()
     {
+        var profiles = (await masterDataService.GetProfilesAsync()).Data ?? new();
+        foreach (var pair in MasterDataDefinitions.ProfileLookupScopes)
+        {
+            lookupOptions[pair.Key] = ToOptions(
+                profiles.Where(profile => string.Equals(profile.ProfileScope, pair.Value, StringComparison.OrdinalIgnoreCase)),
+                profile => profile.ProfileId,
+                profile => $"{profile.ProfileName} ({profile.ProfileCode})");
+        }
+
         lookupOptions["factories"] = await BuildOptionsAsync(masterDataService.GetFactoriesAsync(), factory => factory.FactoryId, factory => $"{factory.FactoryName} ({factory.FactoryCode})");
         lookupOptions["carriers"] = await BuildOptionsAsync(masterDataService.GetCarriersAsync(), carrier => carrier.CarrierId, carrier => $"{carrier.CarrierName} ({carrier.CarrierCode})");
         lookupOptions["vehicles"] = await BuildOptionsAsync(masterDataService.GetVehiclesAsync(), vehicle => vehicle.VehicleId, vehicle => vehicle.VehicleNo);
         lookupOptions["drivers"] = await BuildOptionsAsync(masterDataService.GetDriversAsync(), driver => driver.DriverId, driver => $"{driver.DriverName} ({driver.DriverCode})");
         lookupOptions["product-profiles"] = await BuildOptionsAsync(masterDataService.GetProductProfilesAsync(), profile => profile.ProductProfileId, profile => $"{profile.ProductProfileName} ({profile.ProductProfileCode})");
-        lookupOptions["product-groups"] = await BuildOptionsAsync(masterDataService.GetProductGroupsAsync(), group => group.ProductGroupId, group => $"{group.ProductGroupName} ({group.ProductGroupCode})");
-        lookupOptions["product-categories"] = await BuildOptionsAsync(masterDataService.GetProductCategoriesAsync(), category => category.ProductCategoryId, category => $"{category.ProductCategoryName} ({category.ProductCategoryCode})");
+        productGroups = (await masterDataService.GetProductGroupsAsync()).Data ?? new();
+        productCategories = (await masterDataService.GetProductCategoriesAsync()).Data ?? new();
+        lookupOptions["product-groups"] = ToOptions(productGroups, group => group.ProductGroupId, group => $"{group.ProductGroupName} ({group.ProductGroupCode})");
+        lookupOptions["product-categories"] = ToOptions(productCategories, category => category.ProductCategoryId, category => $"{category.ProductCategoryName} ({category.ProductCategoryCode})");
         lookupOptions["units"] = await BuildOptionsAsync(masterDataService.GetUnitsAsync(), unit => unit.UnitId, unit => $"{unit.UnitName} ({unit.UnitCode})");
         lookupOptions["products"] = await BuildOptionsAsync(masterDataService.GetProductsAsync(), product => product.ProductId, product => $"{product.ProductName} ({product.ProductCode})");
         lookupOptions["provinces"] = await BuildOptionsAsync(masterDataService.GetProvincesAsync(), province => province.ProvinceId, province => province.ProvinceNameTh);
@@ -185,56 +198,92 @@ public sealed class MasterDataFormViewModel(MasterDataService masterDataService,
 
     private async Task RefreshDependentLookupsAsync()
     {
-        if (SelectedDefinition.Key is not ("locations" or "customers"))
+        if (SelectedDefinition.Key is "locations" or "customers")
         {
-            return;
+            var provinceId = GetLongValue(nameof(Location.ProvinceId));
+            var districtId = GetLongValue(nameof(Location.DistrictId));
+
+            if (provinceId.HasValue)
+            {
+                lookupOptions["districts"] = await BuildOptionsAsync(masterDataService.GetDistrictsByProvinceAsync(provinceId.Value), district => district.DistrictId, district => district.DistrictNameTh);
+            }
+
+            if (districtId.HasValue)
+            {
+                lookupOptions["subdistricts"] = await BuildOptionsAsync(masterDataService.GetSubDistrictsByDistrictAsync(districtId.Value), subDistrict => subDistrict.SubDistrictId, subDistrict => subDistrict.SubDistrictNameTh);
+            }
         }
 
-        var provinceId = GetRawValue(nameof(Location.ProvinceId)) as long?;
-        var districtId = GetRawValue(nameof(Location.DistrictId)) as long?;
-
-        if (provinceId.HasValue)
+        if (SelectedDefinition.Key is "product-categories")
         {
-            lookupOptions["districts"] = await BuildOptionsAsync(masterDataService.GetDistrictsByProvinceAsync(provinceId.Value), district => district.DistrictId, district => district.DistrictNameTh);
+            var groupId = GetLongValue(nameof(ProductCategory.ProductGroupId));
+            var group = groupId.HasValue ? productGroups.FirstOrDefault(group => group.ProductGroupId == groupId.Value) : null;
+            SetRawValue(nameof(ProductCategory.ProductProfileId), group?.ProductProfileId);
+            FilterProductGroups();
         }
 
-        if (districtId.HasValue)
+        if (SelectedDefinition.Key is "products")
         {
-            lookupOptions["subdistricts"] = await BuildOptionsAsync(masterDataService.GetSubDistrictsByDistrictAsync(districtId.Value), subDistrict => subDistrict.SubDistrictId, subDistrict => subDistrict.SubDistrictNameTh);
+            var categoryId = GetLongValue(nameof(Product.ProductCategoryId));
+            var category = categoryId.HasValue ? productCategories.FirstOrDefault(category => category.ProductCategoryId == categoryId.Value) : null;
+            var group = productGroups.FirstOrDefault(group => group.ProductGroupId == category?.ProductGroupId);
+            SetRawValue(nameof(Product.ProductGroupId), group?.ProductGroupId);
+            SetRawValue(nameof(Product.ProductProfileId), group?.ProductProfileId);
+            FilterProductGroups();
+            FilterProductCategories();
         }
     }
 
     private async Task HandleDependentFieldChangeAsync(string fieldName)
     {
-        if (SelectedDefinition.Key is not ("locations" or "customers"))
+        if (SelectedDefinition.Key is "locations" or "customers")
         {
-            return;
+            if (fieldName == nameof(Location.ProvinceId))
+            {
+                SetRawValue(nameof(Location.DistrictId), null);
+                SetRawValue(nameof(Location.SubDistrictId), null);
+                var provinceId = GetLongValue(nameof(Location.ProvinceId));
+                lookupOptions["districts"] = provinceId.HasValue
+                    ? await BuildOptionsAsync(masterDataService.GetDistrictsByProvinceAsync(provinceId.Value), district => district.DistrictId, district => district.DistrictNameTh)
+                    : new();
+                lookupOptions["subdistricts"] = new();
+            }
+
+            if (fieldName == nameof(Location.DistrictId))
+            {
+                SetRawValue(nameof(Location.SubDistrictId), null);
+                var districtId = GetLongValue(nameof(Location.DistrictId));
+                lookupOptions["subdistricts"] = districtId.HasValue
+                    ? await BuildOptionsAsync(masterDataService.GetSubDistrictsByDistrictAsync(districtId.Value), subDistrict => subDistrict.SubDistrictId, subDistrict => subDistrict.SubDistrictNameTh)
+                    : new();
+            }
         }
 
-        if (fieldName == nameof(Location.ProvinceId))
+        if (SelectedDefinition.Key is "product-categories" && fieldName == nameof(ProductCategory.ProductProfileId))
         {
-            SetRawValue(nameof(Location.DistrictId), null);
-            SetRawValue(nameof(Location.SubDistrictId), null);
-            var provinceId = GetRawValue(nameof(Location.ProvinceId)) as long?;
-            lookupOptions["districts"] = provinceId.HasValue
-                ? await BuildOptionsAsync(masterDataService.GetDistrictsByProvinceAsync(provinceId.Value), district => district.DistrictId, district => district.DistrictNameTh)
-                : new();
-            lookupOptions["subdistricts"] = new();
+            SetRawValue(nameof(ProductCategory.ProductGroupId), null);
+            FilterProductGroups();
         }
 
-        if (fieldName == nameof(Location.DistrictId))
+        if (SelectedDefinition.Key is "products" && fieldName == nameof(Product.ProductProfileId))
         {
-            SetRawValue(nameof(Location.SubDistrictId), null);
-            var districtId = GetRawValue(nameof(Location.DistrictId)) as long?;
-            lookupOptions["subdistricts"] = districtId.HasValue
-                ? await BuildOptionsAsync(masterDataService.GetSubDistrictsByDistrictAsync(districtId.Value), subDistrict => subDistrict.SubDistrictId, subDistrict => subDistrict.SubDistrictNameTh)
-                : new();
+            SetRawValue(nameof(Product.ProductGroupId), null);
+            SetRawValue(nameof(Product.ProductCategoryId), null);
+            FilterProductGroups();
+            lookupOptions["product-categories"] = new();
+        }
+
+        if (SelectedDefinition.Key is "products" && fieldName == nameof(Product.ProductGroupId))
+        {
+            SetRawValue(nameof(Product.ProductCategoryId), null);
+            FilterProductCategories();
         }
     }
 
     private async Task<OperationResult<object>> LoadRecordAsync(MasterDataDefinition definition, long id)
         => definition.Key switch
         {
+            "profiles" => await LoadTypedRecordAsync<Profile>(definition.Endpoint, id),
             "factories" => await LoadTypedRecordAsync<Factory>(definition.Endpoint, id),
             "customers" => await LoadTypedRecordAsync<Customer>(definition.Endpoint, id),
             "locations" => await LoadTypedRecordAsync<Location>(definition.Endpoint, id),
@@ -260,6 +309,7 @@ public sealed class MasterDataFormViewModel(MasterDataService masterDataService,
     private async Task<OperationResult<object>> CreateRecordAsync(MasterDataDefinition definition)
         => definition.Key switch
         {
+            "profiles" => await CreateTypedRecordAsync<Profile>(definition.Endpoint),
             "factories" => await CreateTypedRecordAsync<Factory>(definition.Endpoint),
             "customers" => await CreateTypedRecordAsync<Customer>(definition.Endpoint),
             "locations" => await CreateTypedRecordAsync<Location>(definition.Endpoint),
@@ -285,6 +335,7 @@ public sealed class MasterDataFormViewModel(MasterDataService masterDataService,
     private async Task<OperationResult<object>> UpdateRecordAsync(MasterDataDefinition definition, long id)
         => definition.Key switch
         {
+            "profiles" => await UpdateTypedRecordAsync<Profile>(definition.Endpoint, id),
             "factories" => await UpdateTypedRecordAsync<Factory>(definition.Endpoint, id),
             "customers" => await UpdateTypedRecordAsync<Customer>(definition.Endpoint, id),
             "locations" => await UpdateTypedRecordAsync<Location>(definition.Endpoint, id),
@@ -334,20 +385,52 @@ public sealed class MasterDataFormViewModel(MasterDataService masterDataService,
     private static async Task<List<SelectOption>> BuildOptionsAsync<T>(Task<OperationResult<List<T>>> source, Func<T, long> idSelector, Func<T, string> labelSelector)
     {
         var result = await source;
-        return result.Data?
+        return result.Data is null ? new() : ToOptions(result.Data, idSelector, labelSelector);
+    }
+
+    private static List<SelectOption> ToOptions<T>(IEnumerable<T> source, Func<T, long> idSelector, Func<T, string> labelSelector)
+        => source
             .OrderBy(labelSelector)
             .Select(item => new SelectOption(idSelector(item).ToString(CultureInfo.InvariantCulture), labelSelector(item)))
-            .ToList() ?? new();
+            .ToList();
+
+    private void FilterProductGroups()
+    {
+        var profileId = GetLongValue(nameof(ProductGroup.ProductProfileId));
+        lookupOptions["product-groups"] = ToOptions(
+            profileId.HasValue ? productGroups.Where(group => group.ProductProfileId == profileId.Value) : productGroups,
+            group => group.ProductGroupId,
+            group => $"{group.ProductGroupName} ({group.ProductGroupCode})");
+    }
+
+    private void FilterProductCategories()
+    {
+        var groupId = GetLongValue(nameof(ProductCategory.ProductGroupId));
+        lookupOptions["product-categories"] = ToOptions(
+            groupId.HasValue ? productCategories.Where(category => category.ProductGroupId == groupId.Value) : productCategories,
+            category => category.ProductCategoryId,
+            category => $"{category.ProductCategoryName} ({category.ProductCategoryCode})");
     }
 
     private object? GetRawValue(string propertyName)
         => Record.GetType().GetProperty(propertyName)?.GetValue(Record);
 
+    private long? GetLongValue(string propertyName)
+        => GetRawValue(propertyName) switch
+        {
+            long value when value > 0 => value,
+            _ => null
+        };
+
     private void SetRawValue(string propertyName, object? value)
     {
         var property = Record.GetType().GetProperty(propertyName);
-        property?.SetValue(Record, value);
+        if (property is null)
+        {
+            return;
+        }
+
+        var targetType = Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType;
+        property.SetValue(Record, value ?? (targetType.IsValueType && Nullable.GetUnderlyingType(property.PropertyType) is null ? Activator.CreateInstance(targetType) : null));
     }
 }
-
-

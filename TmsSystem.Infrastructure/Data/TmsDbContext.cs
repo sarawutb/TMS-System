@@ -8,6 +8,7 @@ public sealed class TmsDbContext(DbContextOptions<TmsDbContext> options) : DbCon
 {
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<User> Users => Set<User>();
+    public DbSet<Profile> Profiles => Set<Profile>();
     public DbSet<Factory> Factories => Set<Factory>();
     public DbSet<Customer> Customers => Set<Customer>();
     public DbSet<Province> Provinces => Set<Province>();
@@ -49,6 +50,7 @@ public sealed class TmsDbContext(DbContextOptions<TmsDbContext> options) : DbCon
     {
         ConfigureAudit(modelBuilder);
         ConfigureSecurity(modelBuilder);
+        ConfigureProfiles(modelBuilder);
         ConfigureMasterData(modelBuilder);
         ConfigureProductCatalog(modelBuilder);
         ConfigureIntegration(modelBuilder);
@@ -57,6 +59,22 @@ public sealed class TmsDbContext(DbContextOptions<TmsDbContext> options) : DbCon
         ConfigureFleet(modelBuilder);
         ConfigureFinance(modelBuilder);
         ConfigureIotAndAnalytics(modelBuilder);
+    }
+
+    private static void ConfigureProfiles(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Profile>(entity =>
+        {
+            entity.ToTable("mst_profile");
+            entity.HasKey(x => x.ProfileId);
+            entity.Property(x => x.ProfileScope).HasMaxLength(80).IsRequired();
+            entity.Property(x => x.ProfileCode).HasMaxLength(50).IsRequired();
+            entity.Property(x => x.ProfileNameTh).HasMaxLength(200).IsRequired();
+            entity.Property(x => x.ProfileNameEn).HasMaxLength(200);
+            entity.Property(x => x.ProfileNameShort).HasMaxLength(50);
+            entity.Property(x => x.Description).HasMaxLength(500);
+            entity.HasIndex(x => new { x.ProfileScope, x.ProfileCode }).HasDatabaseName("UX_mst_profile_ProfileScope_ProfileCode").IsUnique();
+        });
     }
 
     private static void ConfigureMasterData(ModelBuilder modelBuilder)
@@ -72,6 +90,7 @@ public sealed class TmsDbContext(DbContextOptions<TmsDbContext> options) : DbCon
             entity.Property(x => x.TimeZone).HasMaxLength(100);
             entity.Property(x => x.TaxId).HasMaxLength(13);
             entity.Property(x => x.BranchCode).HasMaxLength(5).HasDefaultValue("00000").IsRequired(false);
+            entity.HasOne<Profile>().WithMany().HasForeignKey(x => x.IndustryProfileId).OnDelete(DeleteBehavior.Restrict);
             entity.HasIndex(x => x.FactoryCode).HasDatabaseName("UX_mst_factory_FactoryCode").IsUnique();
         });
 
@@ -91,6 +110,7 @@ public sealed class TmsDbContext(DbContextOptions<TmsDbContext> options) : DbCon
             entity.HasOne(x => x.Province).WithMany().HasForeignKey(x => x.ProvinceId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(x => x.District).WithMany().HasForeignKey(x => x.DistrictId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(x => x.SubDistrict).WithMany().HasForeignKey(x => x.SubDistrictId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<Profile>().WithMany().HasForeignKey(x => x.CustomerProfileId).OnDelete(DeleteBehavior.Restrict);
             entity.HasIndex(x => x.CustomerCode).HasDatabaseName("UX_mst_customer_CustomerCode").IsUnique();
         });
 
@@ -143,6 +163,7 @@ public sealed class TmsDbContext(DbContextOptions<TmsDbContext> options) : DbCon
             entity.HasOne(x => x.Province).WithMany(x => x.Locations).HasForeignKey(x => x.ProvinceId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(x => x.District).WithMany(x => x.Locations).HasForeignKey(x => x.DistrictId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(x => x.SubDistrict).WithMany(x => x.Locations).HasForeignKey(x => x.SubDistrictId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<Profile>().WithMany().HasForeignKey(x => x.LocationProfileId).OnDelete(DeleteBehavior.Restrict);
             entity.HasIndex(x => x.LocationCode).HasDatabaseName("UX_mst_location_LocationCode").IsUnique();
         });
 
@@ -157,6 +178,7 @@ public sealed class TmsDbContext(DbContextOptions<TmsDbContext> options) : DbCon
             entity.Property(x => x.SafetyRating).HasPrecision(5, 2);
             entity.Property(x => x.TaxId).HasMaxLength(13);
             entity.Property(x => x.BranchCode).HasMaxLength(5).HasDefaultValue("00000").IsRequired(false);
+            entity.HasOne<Profile>().WithMany().HasForeignKey(x => x.CarrierProfileId).OnDelete(DeleteBehavior.Restrict);
             entity.HasIndex(x => x.CarrierCode).HasDatabaseName("UX_mst_carrier_CarrierCode").IsUnique();
         });
 
@@ -168,6 +190,7 @@ public sealed class TmsDbContext(DbContextOptions<TmsDbContext> options) : DbCon
             entity.Property(x => x.CapacityWeightKg).HasPrecision(18, 2);
             entity.Property(x => x.CapacityVolumeM3).HasPrecision(18, 2);
             entity.HasOne(x => x.Carrier).WithMany(x => x.Vehicles).HasForeignKey(x => x.CarrierId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<Profile>().WithMany().HasForeignKey(x => x.VehicleProfileId).OnDelete(DeleteBehavior.Restrict);
             entity.HasIndex(x => x.VehicleNo).HasDatabaseName("UX_mst_vehicle_VehicleNo").IsUnique();
         });
 
@@ -236,6 +259,7 @@ public sealed class TmsDbContext(DbContextOptions<TmsDbContext> options) : DbCon
             entity.Property(x => x.UnitNameShort).HasMaxLength(50);
             entity.Property(x => x.UnitSymbol).HasMaxLength(20);
             entity.Property(x => x.DecimalPrecision).HasDefaultValue((byte)2);
+            entity.HasOne<Profile>().WithMany().HasForeignKey(x => x.UnitProfileId).OnDelete(DeleteBehavior.Restrict);
             entity.HasIndex(x => x.UnitCode).HasDatabaseName("UX_mst_unit_UnitCode").IsUnique();
         });
 
@@ -286,6 +310,7 @@ public sealed class TmsDbContext(DbContextOptions<TmsDbContext> options) : DbCon
             entity.Property(x => x.PartnerName).HasMaxLength(200).IsRequired();
             entity.Property(x => x.IntegrationMethod).HasMaxLength(50).IsRequired();
             entity.Property(x => x.EndpointUrl).HasMaxLength(500);
+            entity.HasOne<Profile>().WithMany().HasForeignKey(x => x.SystemProfileId).OnDelete(DeleteBehavior.Restrict);
             entity.HasIndex(x => x.PartnerCode).HasDatabaseName("UX_cfg_integration_partner_PartnerCode").IsUnique();
         });
 
@@ -297,6 +322,7 @@ public sealed class TmsDbContext(DbContextOptions<TmsDbContext> options) : DbCon
             entity.Property(x => x.ReferenceNo).HasMaxLength(100);
             entity.Property(x => x.PayloadRef).HasMaxLength(500);
             entity.Property(x => x.MessageStatus).HasMaxLength(30).IsRequired();
+            entity.HasOne<Profile>().WithMany().HasForeignKey(x => x.MessageProfileId).OnDelete(DeleteBehavior.Restrict);
         });
     }
 
@@ -345,6 +371,7 @@ public sealed class TmsDbContext(DbContextOptions<TmsDbContext> options) : DbCon
             entity.Property(x => x.Status).HasMaxLength(30).IsRequired();
             entity.HasOne(x => x.Vehicle).WithMany().HasForeignKey(x => x.VehicleId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(x => x.Carrier).WithMany().HasForeignKey(x => x.CarrierId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<Profile>().WithMany().HasForeignKey(x => x.VehicleProfileId).OnDelete(DeleteBehavior.Restrict);
             entity.HasIndex(x => x.RoutePlanNo).HasDatabaseName("UX_trn_route_plan_RoutePlanNo").IsUnique();
         });
 
@@ -367,6 +394,7 @@ public sealed class TmsDbContext(DbContextOptions<TmsDbContext> options) : DbCon
             entity.Property(x => x.ConstraintIssuesJson).HasColumnType("nvarchar(max)");
             entity.HasOne(x => x.RoutePlan).WithMany(x => x.LoadPlans).HasForeignKey(x => x.RoutePlanId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(x => x.Vehicle).WithMany().HasForeignKey(x => x.VehicleId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<Profile>().WithMany().HasForeignKey(x => x.VehicleProfileId).OnDelete(DeleteBehavior.Restrict);
             entity.HasIndex(x => x.LoadPlanNo).HasDatabaseName("UX_trn_load_plan_LoadPlanNo").IsUnique();
         });
 
@@ -399,6 +427,7 @@ public sealed class TmsDbContext(DbContextOptions<TmsDbContext> options) : DbCon
             entity.HasKey(x => x.ShipmentStopId);
             entity.Property(x => x.DockCode).HasMaxLength(50);
             entity.Property(x => x.StopStatus).HasMaxLength(30).IsRequired();
+            entity.HasOne<Profile>().WithMany().HasForeignKey(x => x.StopProfileId).OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<TrackingEvent>(entity =>
@@ -414,6 +443,8 @@ public sealed class TmsDbContext(DbContextOptions<TmsDbContext> options) : DbCon
             entity.HasOne<Shipment>().WithMany().HasForeignKey(x => x.ShipmentId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne<Driver>().WithMany().HasForeignKey(x => x.DriverId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne<Vehicle>().WithMany().HasForeignKey(x => x.VehicleId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<Profile>().WithMany().HasForeignKey(x => x.SourceProfileId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<Profile>().WithMany().HasForeignKey(x => x.SafetyEventProfileId).OnDelete(DeleteBehavior.Restrict);
             entity.HasIndex(x => x.ShipmentId).HasDatabaseName("IX_trn_tracking_event_ShipmentId");
             entity.HasIndex(x => x.DriverId).HasDatabaseName("IX_trn_tracking_event_DriverId");
         });
@@ -435,6 +466,7 @@ public sealed class TmsDbContext(DbContextOptions<TmsDbContext> options) : DbCon
             entity.HasKey(x => x.ExceptionId);
             entity.Property(x => x.Severity).HasMaxLength(20).IsRequired();
             entity.Property(x => x.ResolutionStatus).HasMaxLength(30).IsRequired();
+            entity.HasOne<Profile>().WithMany().HasForeignKey(x => x.ExceptionProfileId).OnDelete(DeleteBehavior.Restrict);
         });
     }
 
@@ -447,6 +479,7 @@ public sealed class TmsDbContext(DbContextOptions<TmsDbContext> options) : DbCon
             entity.Property(x => x.OdometerKm).HasPrecision(18, 2);
             entity.Property(x => x.MaintenanceStatus).HasMaxLength(30).IsRequired();
             entity.Property(x => x.Remark).HasMaxLength(500);
+            entity.HasOne<Profile>().WithMany().HasForeignKey(x => x.MaintenanceProfileId).OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<FuelTransaction>(entity =>
@@ -481,6 +514,7 @@ public sealed class TmsDbContext(DbContextOptions<TmsDbContext> options) : DbCon
             entity.Property(x => x.ContractNo).HasMaxLength(50).IsRequired();
             entity.Property(x => x.ContractName).HasMaxLength(200).IsRequired();
             entity.Property(x => x.CurrencyCode).HasMaxLength(10).IsRequired();
+            entity.HasOne<Profile>().WithMany().HasForeignKey(x => x.RateProfileId).OnDelete(DeleteBehavior.Restrict);
             entity.HasIndex(x => x.ContractNo).HasDatabaseName("UX_mst_freight_contract_ContractNo").IsUnique();
         });
 
@@ -516,6 +550,7 @@ public sealed class TmsDbContext(DbContextOptions<TmsDbContext> options) : DbCon
             entity.ToTable("mst_iot_device");
             entity.HasKey(x => x.IotDeviceId);
             entity.Property(x => x.DeviceCode).HasMaxLength(80).IsRequired();
+            entity.HasOne<Profile>().WithMany().HasForeignKey(x => x.DeviceProfileId).OnDelete(DeleteBehavior.Restrict);
             entity.HasIndex(x => x.DeviceCode).HasDatabaseName("UX_mst_iot_device_DeviceCode").IsUnique();
         });
 
